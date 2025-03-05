@@ -1,0 +1,53 @@
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+export default function LoanRiskApp() {
+  const [formData, setFormData] = useState({
+    loanAmount: "",
+    interestRate: "",
+    dti: "",
+    bankruptcies: "",
+    annualIncome: "",
+    totalAccounts: "",
+  });
+  const [riskCategory, setRiskCategory] = useState(null);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    // Simulating model prediction (Replace with actual API call)
+    const { interestRate, dti, bankruptcies } = formData;
+    let risk = "Low Risk";
+    if (interestRate > 15 || dti > 40 || bankruptcies > 0) risk = "High Risk";
+    else if (interestRate > 10 || dti > 30) risk = "Medium Risk";
+    setRiskCategory(risk);
+  };
+
+  return (
+    <div className="flex flex-col items-center p-6">
+      <Card className="w-full max-w-md p-4 shadow-lg">
+        <CardContent>
+          <h2 className="text-xl font-bold mb-4">Loan Risk Assessment</h2>
+          <div className="space-y-2">
+            <Input name="loanAmount" placeholder="Loan Amount ($)" onChange={handleChange} />
+            <Input name="interestRate" placeholder="Interest Rate (%)" onChange={handleChange} />
+            <Input name="dti" placeholder="Debt-to-Income Ratio (%)" onChange={handleChange} />
+            <Input name="bankruptcies" placeholder="Past Bankruptcies" onChange={handleChange} />
+            <Input name="annualIncome" placeholder="Annual Income ($)" onChange={handleChange} />
+            <Input name="totalAccounts" placeholder="Total Accounts" onChange={handleChange} />
+          </div>
+          <Button className="mt-4 w-full bg-blue-500 text-white" onClick={handleSubmit}>
+            Assess Risk
+          </Button>
+          {riskCategory && (
+            <p className="mt-4 text-lg font-semibold">Risk Category: {riskCategory}</p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
