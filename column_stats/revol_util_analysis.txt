@@ -1,0 +1,45 @@
+COMPREHENSIVE ANALYSIS FOR: revol_util
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    209884.000000
+mean         53.052788
+std          24.274526
+min           0.000000
+1%            1.300000
+5%           11.600000
+10%          19.700000
+25%          35.000000
+50%          53.700000
+75%          71.800000
+90%          85.700000
+95%          91.900000
+99%          98.400000
+max         366.600000
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 116
+Missing Percentage: 0.0552Unique Values: 1149
+Skewness: -0.1003Kurtosis: -0.6327IQR: 36.8000Mode: 0.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 51.1352Mean for unpaid loans: 54.9691Median for paid loans: 51.4000Median for unpaid loans: 55.8000Point-Biserial Correlation: -0.0789
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -20.2000Upper outlier bound: 127.0000Outliers count: 16
+Outliers percentage: 0.0076
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with int_rate: 0.2172
+Correlation with dti: 0.1400
+Correlation with loan_amnt: 0.1026
+Correlation with total_acc: -0.0993
+Correlation with loan_paid: -0.0790
+Correlation with annual_inc: 0.0332
+
+

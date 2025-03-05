@@ -1,0 +1,46 @@
+COMPREHENSIVE ANALYSIS FOR: total_bal_ex_mort
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    2.031170e+05
+mean     4.956952e+04
+std      4.748514e+04
+min      0.000000e+00
+1%       2.486000e+03
+5%       7.062800e+03
+10%      1.114060e+04
+25%      2.119800e+04
+50%      3.746700e+04
+75%      6.242300e+04
+90%      9.891740e+04
+95%      1.320730e+05
+99%      2.273182e+05
+max      3.408095e+06
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 6883
+Missing Percentage: 3.2776Unique Values: 93853
+Skewness: 5.8451Kurtosis: 190.3261IQR: 41225.0000Mode: 0.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 49805.5765Mean for unpaid loans: 49336.6494Median for paid loans: 37135.0000Median for unpaid loans: 37783.0000Point-Biserial Correlation: 0.0032
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -40639.5000Upper outlier bound: 124260.5000Outliers count: 11865
+Outliers percentage: 5.6500
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with total_acc: 0.4308
+Correlation with annual_inc: 0.2869
+Correlation with loan_amnt: 0.2770
+Correlation with dti: 0.2193
+Correlation with revol_util: 0.1170
+Correlation with int_rate: 0.0117
+Correlation with loan_paid: 0.0049
+
+

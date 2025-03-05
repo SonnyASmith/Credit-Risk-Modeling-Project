@@ -1,0 +1,46 @@
+COMPREHENSIVE ANALYSIS FOR: pub_rec_bankruptcies
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    209900.000000
+mean          0.140195
+std           0.383979
+min           0.000000
+1%            0.000000
+5%            0.000000
+10%           0.000000
+25%           0.000000
+50%           0.000000
+75%           0.000000
+90%           1.000000
+95%           1.000000
+99%           1.000000
+max           7.000000
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 100
+Missing Percentage: 0.0476Unique Values: 8
+Skewness: 3.2425Kurtosis: 16.1469IQR: 0.0000Mode: 0.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 0.1277Mean for unpaid loans: 0.1527Median for paid loans: 0.0000Median for unpaid loans: 0.0000Point-Biserial Correlation: -0.0326
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: 0.0000Upper outlier bound: 0.0000Outliers count: 27281
+Outliers percentage: 12.9910
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with revol_util: -0.0893
+Correlation with loan_amnt: -0.0879
+Correlation with int_rate: 0.0472
+Correlation with total_acc: 0.0426
+Correlation with annual_inc: -0.0414
+Correlation with loan_paid: -0.0326
+Correlation with dti: -0.0091
+
+

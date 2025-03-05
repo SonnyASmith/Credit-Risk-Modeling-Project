@@ -1,0 +1,45 @@
+COMPREHENSIVE ANALYSIS FOR: dti
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    209946.000000
+mean         18.985667
+std          11.248173
+min           0.000000
+1%            1.940000
+5%            5.300000
+10%           7.710000
+25%          12.430000
+50%          18.410000
+75%          24.930000
+90%          30.630000
+95%          33.610000
+99%          38.920000
+max         999.000000
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 54
+Missing Percentage: 0.0257Unique Values: 4982
+Skewness: 25.3245Kurtosis: 1881.5667IQR: 12.5000Mode: 14.4000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 17.7922Mean for unpaid loans: 20.1784Median for paid loans: 17.1100Median for unpaid loans: 19.7900Point-Biserial Correlation: -0.1061
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -6.3200Upper outlier bound: 43.6800Outliers count: 904
+Outliers percentage: 0.4305
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with total_acc: 0.1732
+Correlation with int_rate: 0.1512
+Correlation with revol_util: 0.1400
+Correlation with annual_inc: -0.1344
+Correlation with loan_paid: -0.1061
+Correlation with loan_amnt: 0.0282
+
+

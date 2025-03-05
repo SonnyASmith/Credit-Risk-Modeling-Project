@@ -1,0 +1,46 @@
+COMPREHENSIVE ANALYSIS FOR: tot_hi_cred_lim
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    2.000400e+05
+mean     1.637303e+05
+std      1.712447e+05
+min      0.000000e+00
+1%       8.400000e+03
+5%       1.840000e+04
+10%      2.682900e+04
+25%      4.737000e+04
+50%      1.014810e+05
+75%      2.356965e+05
+90%      3.768011e+05
+95%      4.762968e+05
+99%      7.269726e+05
+max      9.999999e+06
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 9960
+Missing Percentage: 4.7429Unique Values: 137170
+Skewness: 6.1689Kurtosis: 234.2573IQR: 188326.5000Mode: 15000.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 181725.1036Mean for unpaid loans: 146034.1525Median for paid loans: 121652.0000Median for unpaid loans: 87696.0000Point-Biserial Correlation: 0.0985
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -235119.7500Upper outlier bound: 518186.2500Outliers count: 7438
+Outliers percentage: 3.5419
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with annual_inc: 0.3617
+Correlation with total_acc: 0.3325
+Correlation with loan_amnt: 0.3230
+Correlation with int_rate: -0.1118
+Correlation with loan_paid: 0.1042
+Correlation with revol_util: 0.0259
+Correlation with dti: 0.0148
+
+

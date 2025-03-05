@@ -1,0 +1,46 @@
+COMPREHENSIVE ANALYSIS FOR: total_il_high_credit_limit
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    2.000400e+05
+mean     4.207823e+04
+std      4.280751e+04
+min      0.000000e+00
+1%       0.000000e+00
+5%       0.000000e+00
+10%      0.000000e+00
+25%      1.490975e+04
+50%      3.179000e+04
+75%      5.650300e+04
+90%      9.027920e+04
+95%      1.197040e+05
+99%      2.001443e+05
+max      1.736064e+06
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 9960
+Missing Percentage: 4.7429Unique Values: 82847
+Skewness: 3.1475Kurtosis: 30.6685IQR: 41593.2500Mode: 0.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 42126.2560Mean for unpaid loans: 42030.9968Median for paid loans: 31450.0000Median for unpaid loans: 32073.0000Point-Biserial Correlation: -0.0008
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -47480.1250Upper outlier bound: 118892.8750Outliers count: 10181
+Outliers percentage: 4.8481
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with total_acc: 0.4196
+Correlation with dti: 0.2481
+Correlation with annual_inc: 0.2431
+Correlation with loan_amnt: 0.2118
+Correlation with revol_util: 0.0310
+Correlation with int_rate: 0.0063
+Correlation with loan_paid: 0.0011
+
+

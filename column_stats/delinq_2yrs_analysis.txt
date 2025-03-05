@@ -1,0 +1,46 @@
+COMPREHENSIVE ANALYSIS FOR: delinq_2yrs
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    210000.000000
+mean          0.329486
+std           0.899119
+min           0.000000
+1%            0.000000
+5%            0.000000
+10%           0.000000
+25%           0.000000
+50%           0.000000
+75%           0.000000
+90%           1.000000
+95%           2.000000
+99%           4.000000
+max          24.000000
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 0
+Missing Percentage: 0.0000Unique Values: 24
+Skewness: 5.4821Kurtosis: 53.2417IQR: 0.0000Mode: 0.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 0.3083Mean for unpaid loans: 0.3507Median for paid loans: 0.0000Median for unpaid loans: 0.0000Point-Biserial Correlation: -0.0236
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: 0.0000Upper outlier bound: 0.0000Outliers count: 41546
+Outliers percentage: 19.7838
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with total_acc: 0.1255
+Correlation with annual_inc: 0.0408
+Correlation with int_rate: 0.0362
+Correlation with revol_util: -0.0237
+Correlation with loan_paid: -0.0236
+Correlation with dti: -0.0130
+Correlation with loan_amnt: 0.0043
+
+

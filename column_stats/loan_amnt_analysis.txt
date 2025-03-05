@@ -1,0 +1,52 @@
+COMPREHENSIVE ANALYSIS FOR: loan_amnt
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    210000.000000
+mean      14829.497857
+std        8754.284166
+min        1000.000000
+1%         1700.000000
+5%         3500.000000
+10%        5000.000000
+25%        8000.000000
+50%       12900.000000
+75%       20000.000000
+90%       28000.000000
+95%       33950.000000
+99%       35000.000000
+max       40000.000000
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 0
+Missing Percentage: 0.0000Unique Values: 1437
+Skewness: 0.7315Kurtosis: -0.1842IQR: 12000.0000Mode: 10000
+
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 14145.6720Mean for unpaid loans: 15512.9070Median for paid loans: 12000.0000Median for unpaid loans: 14075.0000Point-Biserial Correlation: -0.0781
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -10000.0000Upper outlier bound: 38000.0000Outliers count: 1060
+Outliers percentage: 0.5048
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with annual_inc: 0.2924
+Correlation with total_acc: 0.2148
+Correlation with int_rate: 0.1776
+Correlation with revol_util: 0.1026
+Correlation with loan_paid: -0.0781
+Correlation with dti: 0.0282
+
+
+6. FINANCIAL INSIGHTS
+------------------------------------------------------------
+Average Loan Amount: $14829.50
+Typical Loan Range: $8000.00 to $20000.00
+Average Loan for  36 months: $12547.60
+Average Loan for  60 months: $20237.17

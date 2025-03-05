@@ -1,0 +1,45 @@
+COMPREHENSIVE ANALYSIS FOR: total_acc
+============================================================
+
+1. BASIC STATISTICS
+------------------------------------------------------------
+count    210000.000000
+mean         24.911138
+std          12.054522
+min           2.000000
+1%            5.000000
+5%            9.000000
+10%          11.000000
+25%          16.000000
+50%          23.000000
+75%          32.000000
+90%          41.000000
+95%          47.000000
+99%          61.000000
+max         176.000000
+
+2. ADDITIONAL STATISTICS
+------------------------------------------------------------
+Missing Values: 0
+Missing Percentage: 0.0000Unique Values: 121
+Skewness: 0.9980Kurtosis: 2.0188IQR: 16.0000Mode: 20.0000
+
+3. RELATIONSHIP WITH LOAN STATUS
+------------------------------------------------------------
+Mean for paid loans: 25.1079Mean for unpaid loans: 24.7145Median for paid loans: 23.0000Median for unpaid loans: 23.0000Point-Biserial Correlation: 0.0163
+
+4. OUTLIER ANALYSIS
+------------------------------------------------------------
+Lower outlier bound: -8.0000Upper outlier bound: 56.0000Outliers count: 3647
+Outliers percentage: 1.7367
+
+5. CORRELATIONS WITH KEY VARIABLES
+------------------------------------------------------------
+Correlation with loan_amnt: 0.2148
+Correlation with dti: 0.1732
+Correlation with annual_inc: 0.1647
+Correlation with revol_util: -0.0993
+Correlation with int_rate: -0.0377
+Correlation with loan_paid: 0.0163
+
+
