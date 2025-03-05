@@ -31,4 +31,4 @@ if __name__ == "__main__":
     
     # Predict risk
     risk = classify_risk(loan_amount, interest_rate, dti, bankruptcies, annual_income, total_accounts)
-    print(f"Predicted Risk Category: {risk}")
+    print(f"Loan Paid?: {risk}")
