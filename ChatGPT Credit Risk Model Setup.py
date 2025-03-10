@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 
 # Load dataset
-file_path = "resampled_loan_data.csv"  # Update path if needed
+file_path = "imputed_data.csv"  # Update path if needed
 df = pd.read_csv(file_path)
 
 # Select relevant features
