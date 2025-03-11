@@ -1,0 +1,106 @@
+# Import necessary libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from google.colab import files
+uploaded = files.upload()
+
+# Step 2: Load the data
+data = pd.read_excel('resampled_loan_data.xlsx')  # Load the uploaded Excel file
+
+# Step 3: Drop columns not available at loan application time (if they exist)
+columns_to_drop = ['last_pymnt_d', 'out_prncp', 'out_prncp_inv', 'debt_settlement_flag']
+columns_to_drop = [col for col in columns_to_drop if col in data.columns]
+data = data.drop(columns_to_drop, axis=1)
+
+# Step 4: Define target and feature columns
+target = 'loan_paid'
+features = data.columns.drop(target)
+
+# Step 5: Split data into training and testing sets
+train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
+
+# Step 6: Preprocess 'earliest_cr_line' (convert to years since reference date)
+reference_date = pd.to_datetime('2019-01-01')
+train_data['earliest_cr_line'] = pd.to_datetime(train_data['earliest_cr_line'])
+test_data['earliest_cr_line'] = pd.to_datetime(test_data['earliest_cr_line'])
+train_data['years_since_earliest_cr_line'] = (reference_date - train_data['earliest_cr_line']).dt.days / 365.25
+test_data['years_since_earliest_cr_line'] = (reference_date - test_data['earliest_cr_line']).dt.days / 365.25
+train_data = train_data.drop('earliest_cr_line', axis=1)
+test_data = test_data.drop('earliest_cr_line', axis=1)
+
+# Step 7: Map 'emp_length' to numerical values
+emp_length_mapping = {
+    '< 1 year': 0, '1 year': 1, '2 years': 2, '3 years': 3, '4 years': 4,
+    '5 years': 5, '6 years': 6, '7 years': 7, '8 years': 8, '9 years': 9,
+    '10+ years': 10
+}
+train_data['emp_length'] = train_data['emp_length'].map(emp_length_mapping)
+test_data['emp_length'] = test_data['emp_length'].map(emp_length_mapping)
+
+# Step 8: Map 'grade' to numerical values (ordinal encoding)
+grade_mapping = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7}
+train_data['grade'] = train_data['grade'].map(grade_mapping)
+test_data['grade'] = test_data['grade'].map(grade_mapping)
+
+# Step 9: Define numerical and categorical columns
+numerical_cols = [
+    'loan_amnt', 'pub_rec_bankruptcies', 'tax_liens', 'tot_hi_cred_lim',
+    'total_bal_ex_mort', 'total_bc_limit', 'total_il_high_credit_limit',
+    'annual_inc', 'collections_12_mths_ex_med', 'delinq_2yrs', 'dti',
+    'inq_last_6mths', 'installment', 'int_rate', 'pub_rec', 'revol_util',
+    'total_acc', 'years_since_earliest_cr_line', 'emp_length', 'grade'
+]
+categorical_cols = ['verification_status', 'disbursement_method', 'home_ownership', 'purpose', 'term']
+
+# Step 10: Create preprocessing pipelines
+num_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
+])
+cat_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+])
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', num_transformer, numerical_cols),
+        ('cat', cat_transformer, categorical_cols)
+    ])
+
+# Step 11: Fit and transform training data
+X_train = preprocessor.fit_transform(train_data[numerical_cols + categorical_cols])
+y_train = train_data[target].values
+
+# Transform test data
+X_test = preprocessor.transform(test_data[numerical_cols + categorical_cols])
+y_test = test_data[target].values
+
+# Step 12: Build the neural network
+model = models.Sequential([
+    layers.Dense(64, activation='relu', input_shape=(X_train.shape[1],)),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(1, activation='sigmoid')
+])
+
+# Step 13: Compile the model
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
+
+# Step 14: Train the model
+history = model.fit(X_train, y_train,
+                    epochs=50,
+                    batch_size=32,
+                    validation_split=0.2,
+                    verbose=1)
+
+# Step 15: Evaluate the model on the test set
+test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
+print(f"\nTest Accuracy: {test_accuracy:.4f}")
