@@ -36,19 +36,28 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
 # Model configurations
-MODEL_CONFIGS = {
-    'random_forest': {
+
+'''
+Original config:
         'default_features': [
             "loan_amnt", "int_rate", "dti", "pub_rec_bankruptcies",
             "annual_inc", "total_acc"
+        ],
+'''
+MODEL_CONFIGS = {
+    'random_forest': {
+        'default_features': [
+            "dti","annual_inc", "total_acc",
+            "loan_amnt","pub_rec","installment","tax_liens"
+                             
         ],
         'class': RandomForestClassifier,
         'default_params': {'n_estimators': 100, 'random_state': 42}
     },
     'logistic_regression': {
         'default_features': [
-            "loan_amnt", "int_rate", "dti", "pub_rec_bankruptcies",
-            "annual_inc", "total_acc"
+            "dti","annual_inc", "total_acc",
+            "loan_amnt","pub_rec","installment","tax_liens"
         ],
         'class': LogisticRegression,
         'default_params': {'max_iter': 500, 'random_state': 42}
