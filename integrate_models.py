@@ -14,6 +14,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+from xgboost import XGBClassifier
 
 # Metrics imports
 from sklearn.metrics import (
@@ -61,6 +62,14 @@ MODEL_CONFIGS = {
         ],
         'class': LogisticRegression,
         'default_params': {'max_iter': 500, 'random_state': 42}
+    },
+    'xgboost': {
+        'default_features': [
+            "dti","annual_inc", "total_acc",
+            "loan_amnt","pub_rec","installment","tax_liens"
+        ],
+        'class': XGBClassifier,
+        'default_params': {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 6, 'random_state': 42}
     }
 }
 
@@ -962,17 +971,34 @@ if __name__ == "__main__":
     evaluator.plot_roc_curve()
     evaluator.plot_feature_importance(lr_trainer, feature_names=lr_features)
 
+    # XGBoost (NEW)
+    print("\n===== XGBOOST MODEL =====")
+    xgb_features = MODEL_CONFIGS['xgboost']['default_features']
+    data_processor.prepare_data(features=xgb_features, model_type='xgboost')
+    X_train, y_train = data_processor.get_training_data()
+    X_test, y_test = data_processor.get_test_data()
+
+    # Train XGBoost model
+    xgb_trainer = CreditModelTrainer(model_type='xgboost')
+    xgb_trainer.train(X_train, y_train)
+
+    # Evaluate XGBoost model
+    evaluator.evaluate_model(xgb_trainer, X_test, y_test, model_name='XGBoost')
+    evaluator.plot_confusion_matrix(model_name='XGBoost')
+    evaluator.plot_roc_curve()
+    evaluator.plot_feature_importance(xgb_trainer, feature_names=xgb_features)
+
     # Compare models
     comparison = evaluator.compare_models()
     evaluator.plot_model_comparison()
 
     # Plot ROC curves for both models together
-    evaluator.plot_roc_curve(model_names=['RandomForest', 'LogisticRegression'])
+    evaluator.plot_roc_curve(model_names=['RandomForest', 'LogisticRegression', 'XGBoost'])
 
     # Add a precision-recall curve comparison
-    evaluator.plot_precision_recall_curve(model_names=['RandomForest', 'LogisticRegression'])
+    evaluator.plot_precision_recall_curve(model_names=['RandomForest', 'LogisticRegression', 'XGBoost'])
 
     # Add side-by-side confusion matrix comparison
-    evaluator.plot_confusion_matrices_comparison(model_names=['RandomForest', 'LogisticRegression'])
+    evaluator.plot_confusion_matrices_comparison(model_names=['RandomForest', 'LogisticRegression', 'XGBoost'])
 
     print("\nAll evaluations completed successfully!")
