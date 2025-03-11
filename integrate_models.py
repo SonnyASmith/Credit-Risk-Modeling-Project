@@ -68,7 +68,7 @@ MODEL_CONFIGS = {
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (10, 6)
 
-# For reproducibility
+# For reproducibility, ensure consistency and fair model comparison
 RANDOM_STATE = 42
 
 
@@ -122,7 +122,7 @@ class CreditDataProcessor:
         if model_type and model_type in MODEL_CONFIGS:
             return MODEL_CONFIGS[model_type]['default_features']
 
-        # Default: return all numeric columns except the target
+        # IF NO MODEL TYPE SPECIFIED: return all numeric columns except the target
         numeric_cols = self.df.select_dtypes(include=['int64', 'float64']).columns
         return [col for col in numeric_cols if col != self.target_col]
 
@@ -155,18 +155,19 @@ class CreditDataProcessor:
         # Convention: 0 = loan paid off, 1 = loan not paid off
         y = (self.df[self.target_col] != 0).astype(int)
         print(f"Target distribution: {dict(zip(*np.unique(y, return_counts=True)))}")
+        # This would show something like: Target distribution: {0: 8000, 1: 2000}
 
-        # Split data
+        # Split data 80% training 20% testing
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             X, y, test_size=test_size, random_state=RANDOM_STATE, stratify=y
-        )
+        )  # stratify parameter makes sure data isn't mis-balanced
 
-        # Scale features
+        # Scale features, after this, features have mean=0 and stddev=1
         self.X_train = self.scaler.fit_transform(self.X_train)
         self.X_test = self.scaler.transform(self.X_test)
 
         print(f"Data prepared: {self.X_train.shape[0]} training samples, {self.X_test.shape[0]} test samples")
-        return self
+        return self  # return self to allow method chaining
 
     def get_training_data(self):
         """Return the prepared training data."""
@@ -194,7 +195,7 @@ class CreditModelTrainer:
     Trains credit risk models with consistent interface.
 
     This class handles model training and prediction for different
-    types of credit risk models with a unified interface.
+    types of credit risk models with a unified interface. Uses default params if None.
     """
 
     def __init__(self, model_type='random_forest', model_params=None):
@@ -210,14 +211,14 @@ class CreditModelTrainer:
                              f"Choose from: {list(MODEL_CONFIGS.keys())}")
 
         self.model_type = model_type
-        self.model_config = MODEL_CONFIGS[model_type]
+        self.model_config = MODEL_CONFIGS[model_type]  # stores configuration dict for selected model
 
-        # Use default params if none provided
+        # Use default params if none provided - default params are with MODEL_CONFIG global var
         if model_params is None:
             model_params = self.model_config['default_params']
 
         # Create model instance
-        self.model = self.model_config['class'](**model_params)
+        self.model = self.model_config['class'](**model_params)  # ** syntax unpacks the dict
         self.model_name = f"{self.model.__class__.__name__}"
         print(f"Created {self.model_name} model")
 
@@ -245,23 +246,33 @@ class CreditModelTrainer:
         """
         Make predictions with the trained model.
 
-        Args:
-            X: Feature data to predict with
+    This method delegates to the underlying scikit-learn model's predict method.
+    All scikit-learn estimators implement the predict method as part of the
+    standardized API, so no explicit check is needed before calling it.
 
-        Returns:
-            y_pred: Class predictions
+    Args:
+        X: Feature data to predict with
+
+    Returns:
+        y_pred: Class predictions (0 = paid off, 1 = not paid off)
         """
         return self.model.predict(X)
 
     def predict_proba(self, X):
         """
-        Get prediction probabilities.
+         Get prediction probabilities for the positive class (loan not paid off).
 
-        Args:
-            X: Feature data to predict with
+    Not all scikit-learn models support probability predictions, so this method
+    checks if predict_proba exists on the underlying model before calling it.
 
-        Returns:
-            y_proba: Probability predictions
+    Args:
+        X: Feature data to predict with
+
+    Returns:
+        y_proba: Probability predictions for the positive class (class 1)
+
+    Raises:
+        AttributeError: If the underlying model does not support predict_proba
         """
         if hasattr(self.model, 'predict_proba'):
             proba = self.model.predict_proba(X)
@@ -291,14 +302,23 @@ class CreditModelTrainer:
     @classmethod
     def load_model(cls, path, model_type=None):
         """
-        Load a trained model from a file.
+       Load a trained model from a file.
 
-        Args:
-            path (str): Path to the model file
-            model_type (str): Type of model being loaded
+    This is a class method, meaning it's called on the class itself rather than
+    on an instance (e.g., CreditModelTrainer.load_model('path/to/model.pkl')).
+    The 'cls' parameter receives the class itself as the first argument instead
+    of an instance, allowing the method to create and return a new instance.
 
-        Returns:
-            CreditModelTrainer: Trainer with loaded model
+    Args:
+        path (str): Path to the model file
+        model_type (str): Type of model being loaded ('random_forest' or 'logistic_regression')
+                         If None, attempts to infer from the filename
+
+    Returns:
+        CreditModelTrainer: A trainer instance with the loaded model
+
+    Raises:
+        ValueError: If model_type is not provided and cannot be inferred from path
         """
         # Infer model type from filename if not provided
         if model_type is None:
@@ -320,13 +340,24 @@ class CreditModelTrainer:
 
     def get_feature_importance(self, feature_names=None):
         """
-        Get feature importance if supported by model.
+         Get feature importance if supported by model.
+   This method handles different ways that models represent feature importance:
+   1. Tree-based models (like RandomForest) use 'feature_importances_'
+   2. Linear models (like LogisticRegression) use 'coef_' (coefficients)
 
-        Args:
-            feature_names (list): Names of features
+   The method automatically detects which type of model is being used and
+   extracts the appropriate measure of feature importance.
 
-        Returns:
-            pd.DataFrame: Feature importance data sorted by importance
+   Args:
+       feature_names (list): Names of features to label the importance data
+                            If None, generates generic feature names
+
+   Returns:
+       pd.DataFrame: DataFrame containing feature names and their importance
+                    values, sorted by importance in descending order.
+                    For linear models, also includes the raw coefficients.
+
+       None: If the model doesn't support feature importance
         """
         if hasattr(self.model, 'feature_importances_'):
             importances = self.model.feature_importances_
@@ -381,17 +412,30 @@ class CreditModelEvaluator:
 
     def evaluate_model(self, model_trainer, X_test, y_test, model_name=None):
         """
-        Evaluate a model and store results.
+        Evaluate a model and store comprehensive performance metrics.
 
-        Args:
-            model_trainer: Trained CreditModelTrainer instance
-            X_test: Test feature data
-            y_test: Test target data
-            model_name (str): Name to identify this model evaluation
-                             If None, uses model_trainer.model_name
+   calculates various classification metrics for the trained model,
+   including accuracy, precision, recall, F1 score, and confusion matrix. If the
+   model supports probability predictions, it also calculates AUC-ROC and
+   average precision.
 
-        Returns:
-            dict: Evaluation metrics
+   The method handles models with and without probability prediction capabilities,
+   automatically detecting what metrics can be calculated. Results are both
+   printed to console and stored in the evaluation_results dictionary for
+   later comparison between models.
+
+   Args:
+       model_trainer: Trained CreditModelTrainer instance that contains the model
+       X_test: Test feature data matrix
+       y_test: Test target data (ground truth labels)
+       model_name (str): Name to identify this model in reports and comparisons
+                        If None, uses the model's class name from model_trainer
+
+   Returns:
+       dict: Dictionary containing all evaluation metrics and predictions
+             - Basic metrics: accuracy, precision, recall, f1, confusion_matrix
+             - If available: auc_roc, avg_precision, y_pred_proba
+             - Also includes y_pred and y_true for later visualization
         """
         if model_name is None:
             model_name = model_trainer.model_name
@@ -706,13 +750,27 @@ class CreditModelEvaluator:
 
     def compare_models(self, metric='f1'):
         """
-        Compare models based on a specific metric.
+       Compare all evaluated models based on a specific performance metric.
 
-        Args:
-            metric (str): Metric to compare models on
+   Creates a tabular comparison of all models that have been
+   evaluated using the evaluate_model method. It extracts key metrics for
+   each model from the stored evaluation results and presents them in a
+   DataFrame, sorted by the specified metric.
 
-        Returns:
-            pd.DataFrame: Comparison of models
+   The method automatically detects which metrics are available across all
+   models, including probability-based metrics (like AUC-ROC) if all models
+   support them.
+
+   Args:
+       metric (str): Metric to use for sorting the models
+                    Common options: 'accuracy', 'precision', 'recall', 'f1', 'auc_roc'
+
+   Returns:
+       pd.DataFrame: DataFrame containing all models' performance metrics,
+                    with each row representing a model and columns for metrics,
+                    sorted by the specified metric in descending order
+
+       None: If no models have been evaluated yet
         """
         if not self.evaluation_results:
             print("No models evaluated yet.")
