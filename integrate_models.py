@@ -36,6 +36,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
+# For reproducibility, ensure consistency and fair model comparison
+RANDOM_STATE = 42
+
 # Model configurations
 
 '''
@@ -45,40 +48,29 @@ Original config:
             "annual_inc", "total_acc"
         ],
 '''
+FEATURES = ["dti", "annual_inc", "installment", "int_rate", "revol_util", "inq_last_6mths", "delinq_2yrs"]
+
 MODEL_CONFIGS = {
     'random_forest': {
-        'default_features': [
-            "dti","annual_inc", "total_acc",
-            "loan_amnt","pub_rec","installment","tax_liens"
-                             
-        ],
+        'default_features': FEATURES,
         'class': RandomForestClassifier,
-        'default_params': {'n_estimators': 100, 'random_state': 42}
+        'default_params': {'n_estimators': 100, 'random_state': RANDOM_STATE}
     },
     'logistic_regression': {
-        'default_features': [
-            "dti","annual_inc", "total_acc",
-            "loan_amnt","pub_rec","installment","tax_liens"
-        ],
+        'default_features': FEATURES,
         'class': LogisticRegression,
-        'default_params': {'max_iter': 500, 'random_state': 42}
+        'default_params': {'max_iter': 500, 'random_state': RANDOM_STATE}
     },
     'xgboost': {
-        'default_features': [
-            "dti","annual_inc", "total_acc",
-            "loan_amnt","pub_rec","installment","tax_liens"
-        ],
+        'default_features': FEATURES,
         'class': XGBClassifier,
-        'default_params': {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 6, 'random_state': 42}
+        'default_params': {'n_estimators': 100, 'learning_rate': 0.1, 'max_depth': 6, 'random_state': RANDOM_STATE}
     }
 }
 
 # Set default visualization style
 sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (10, 6)
-
-# For reproducibility, ensure consistency and fair model comparison
-RANDOM_STATE = 42
 
 
 class CreditDataProcessor:
