@@ -1,0 +1,180 @@
+# Install necessary packages
+!pip install xgboost
+
+# Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, accuracy_score
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
+from xgboost import XGBClassifier
+from google.colab import files
+
+# Step 1: Upload and load the data
+uploaded = files.upload()
+data = pd.read_excel('resampled_loan_data.xlsx')
+print("Class distribution of loan_paid:")
+print(data['loan_paid'].value_counts(normalize=True))
+
+# Step 2: Drop columns not available at loan application time
+columns_to_drop = ['last_pymnt_d', 'out_prncp', 'out_prncp_inv', 'debt_settlement_flag']
+columns_to_drop = [col for col in columns_to_drop if col in data.columns]
+data = data.drop(columns_to_drop, axis=1)
+
+# Step 3: Define target
+target = 'loan_paid'
+
+# Step 4: Split data into training and testing sets
+train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
+
+# Step 5: Preprocess and engineer features
+reference_date = pd.to_datetime('2019-01-01')
+train_data['earliest_cr_line'] = pd.to_datetime(train_data['earliest_cr_line'])
+test_data['earliest_cr_line'] = pd.to_datetime(test_data['earliest_cr_line'])
+train_data['years_since_earliest_cr_line'] = (reference_date - train_data['earliest_cr_line']).dt.days / 365.25
+test_data['years_since_earliest_cr_line'] = (reference_date - test_data['earliest_cr_line']).dt.days / 365.25
+train_data = train_data.drop('earliest_cr_line', axis=1)
+test_data = test_data.drop('earliest_cr_line', axis=1)
+
+# Convert to numeric
+train_data['dti'] = pd.to_numeric(train_data['dti'], errors='coerce')
+test_data['dti'] = pd.to_numeric(test_data['dti'], errors='coerce')
+train_data['loan_amnt'] = pd.to_numeric(train_data['loan_amnt'], errors='coerce')
+test_data['loan_amnt'] = pd.to_numeric(test_data['loan_amnt'], errors='coerce')
+train_data['annual_inc'] = pd.to_numeric(train_data['annual_inc'], errors='coerce').replace(0, 1)
+test_data['annual_inc'] = pd.to_numeric(test_data['annual_inc'], errors='coerce').replace(0, 1)
+train_data['revol_util'] = pd.to_numeric(train_data['revol_util'], errors='coerce')
+test_data['revol_util'] = pd.to_numeric(test_data['revol_util'], errors='coerce')
+
+# Engineer features
+train_data['loan_amnt_dti'] = np.log1p(train_data['loan_amnt']) * train_data['dti']
+test_data['loan_amnt_dti'] = np.log1p(test_data['loan_amnt']) * test_data['dti']
+train_data['loan_to_income'] = train_data['loan_amnt'] / train_data['annual_inc']
+test_data['loan_to_income'] = test_data['loan_amnt'] / test_data['annual_inc']
+train_data['term_binary'] = train_data['term'].map({'36 months': 0, '60 months': 1})
+test_data['term_binary'] = test_data['term'].map({'36 months': 0, '60 months': 1})
+train_data['dti_term'] = train_data['dti'] * train_data['term_binary']
+test_data['dti_term'] = test_data['dti'] * test_data['term_binary']
+train_data['loan_to_bc_limit'] = train_data['loan_amnt'] / train_data['total_bc_limit'].replace(0, 1)
+test_data['loan_to_bc_limit'] = test_data['loan_amnt'] / test_data['total_bc_limit'].replace(0, 1)
+train_data['dti_to_income'] = train_data['dti'] / train_data['annual_inc']
+test_data['dti_to_income'] = test_data['dti'] / test_data['annual_inc']
+
+# Robust adjustments
+train_data['loan_to_income'] = train_data['loan_to_income'].clip(upper=1.0)
+test_data['loan_to_income'] = test_data['loan_to_income'].clip(upper=1.0)
+train_data['loan_to_bc_limit'] = train_data['loan_to_bc_limit'].clip(upper=10.0)
+test_data['loan_to_bc_limit'] = test_data['loan_to_bc_limit'].clip(upper=10.0)
+train_data['home_ownership'] = train_data['home_ownership'].replace(['NONE', 'OTHER', 'ANY'], 'OTHER')
+test_data['home_ownership'] = test_data['home_ownership'].replace(['NONE', 'OTHER', 'ANY'], 'OTHER')
+train_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+test_data.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# Step 6: Define feature set
+numerical_cols = ['dti', 'total_bc_limit', 'annual_inc', 'loan_to_income', 'loan_amnt_dti', 'revol_util', 'dti_term', 'loan_to_bc_limit', 'dti_to_income', 'years_since_earliest_cr_line']
+categorical_cols = ['term', 'home_ownership']
+
+# Step 7: Compute Information Value (IV)
+def calculate_iv(df, feature, target):
+    grouped = df.groupby(feature)[target].agg(['count', 'sum'])
+    grouped['non_default'] = grouped['count'] - grouped['sum']
+    total_default = df[target].sum()
+    total_non_default = df[target].count() - total_default
+    grouped['dist_default'] = grouped['sum'] / total_default
+    grouped['dist_non_default'] = grouped['non_default'] / total_non_default
+    grouped['woe'] = np.log(grouped['dist_default'] / grouped['dist_non_default'].replace(0, 0.0001))
+    grouped['iv'] = (grouped['dist_default'] - grouped['dist_non_default']) * grouped['woe']
+    return grouped['iv'].sum()
+
+print("\n=== Information Value (IV) Analysis ===")
+for col in categorical_cols:
+    iv = calculate_iv(train_data, col, target)
+    print(f"{col}: IV = {iv:.4f}")
+for col in numerical_cols:
+    train_data[col + '_bin'] = pd.qcut(train_data[col].dropna(), q=10, duplicates='drop')
+    iv = calculate_iv(train_data, col + '_bin', target)
+    print(f"{col}: IV = {iv:.4f}")
+
+# Step 8: Preprocessing pipeline
+num_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())
+])
+cat_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))
+])
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', num_transformer, numerical_cols),
+        ('cat', cat_transformer, categorical_cols)
+    ])
+
+# Step 9: Fit and transform data
+X_train = preprocessor.fit_transform(train_data[numerical_cols + categorical_cols])
+X_test = preprocessor.transform(test_data[numerical_cols + categorical_cols])
+y_train = train_data[target].values
+y_test = test_data[target].values
+
+# Step 10: Train XGBoost with GridSearchCV
+param_grid = {
+    'n_estimators': [100, 200, 400],
+    'max_depth': [3, 5, 9],
+    'learning_rate': [0.05, 0.1, 0.3],
+    'subsample': [0.7, 0.9],
+    'colsample_bytree': [0.7, 1.0]
+}
+xgb = XGBClassifier(scale_pos_weight=0.9, random_state=42, eval_metric='logloss')
+grid_search = GridSearchCV(xgb, param_grid, cv=3, scoring='accuracy', verbose=1, n_jobs=-1)
+grid_search.fit(X_train, y_train)
+best_xgb = grid_search.best_estimator_
+xgb_accuracy = best_xgb.score(X_test, y_test)
+print(f"\nOptimized XGBoost Test Accuracy: {xgb_accuracy:.4f}")
+print(f"Best Parameters: {grid_search.best_params_}")
+
+# Step 11: Train Enhanced Neural Network
+model = models.Sequential([
+    layers.Input(shape=(X_train.shape[1],)),
+    layers.Dense(512, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dropout(0.3),
+    layers.Dense(256, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dropout(0.3),
+    layers.Dense(128, activation='relu'),
+    layers.BatchNormalization(),
+    layers.Dropout(0.3),
+    layers.Dense(64, activation='relu'),
+    layers.Dropout(0.3),
+    layers.Dense(1, activation='sigmoid')
+])
+model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
+early_stopping = EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
+model.fit(X_train, y_train, epochs=100, batch_size=128, validation_split=0.2, callbacks=[early_stopping], verbose=1)
+test_loss, nn_accuracy = model.evaluate(X_test, y_test, verbose=0)
+print(f"Neural Network Test Accuracy: {nn_accuracy:.4f}")
+
+# Step 12: Stacking Ensemble with XGBoost meta-model
+nn_pred_train = model.predict(X_train).flatten()
+xgb_pred_train = best_xgb.predict_proba(X_train)[:, 1]
+stacked_train = np.column_stack((nn_pred_train, xgb_pred_train))
+nn_pred_test = model.predict(X_test).flatten()
+xgb_pred_test = best_xgb.predict_proba(X_test)[:, 1]
+stacked_test = np.column_stack((nn_pred_test, xgb_pred_test))
+
+meta_model = XGBClassifier(n_estimators=200, max_depth=5, learning_rate=0.05, random_state=42)
+meta_model.fit(stacked_train, y_train)
+stacked_pred = meta_model.predict(stacked_test)
+stacked_accuracy = accuracy_score(y_test, stacked_pred)
+print(f"Stacked Ensemble Test Accuracy: {stacked_accuracy:.4f}")
+
+# Step 13: Additional evaluation
+print("\nClassification Report (Stacked Ensemble):")
+print(classification_report(y_test, stacked_pred))
