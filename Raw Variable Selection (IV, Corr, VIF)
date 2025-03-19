@@ -1,0 +1,157 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from scipy.stats import ks_2samp, chi2_contingency
+import seaborn as sns
+import matplotlib.pyplot as plt
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from google.colab import files
+
+# Step 1: Upload and load the data
+uploaded = files.upload()
+data = pd.read_excel('resampled_loan_data.xlsx')
+print("Class distribution of loan_paid:")
+print(data['loan_paid'].value_counts(normalize=True))
+
+# Step 1: Business-Driven Initial Selection
+# Define target and raw variables (excluding grade, int_rate, installment, and post-origination variables)
+target = 'loan_paid'
+raw_variables = [
+    'loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bal_ex_mort', 'total_acc', 'total_bc_limit',
+    'tot_hi_cred_lim', 'delinq_2yrs', 'pub_rec', 'pub_rec_bankruptcies', 'tax_liens',
+    'collections_12_mths_ex_med', 'inq_last_6mths', 'earliest_cr_line', 'emp_length',
+    'home_ownership', 'verification_status', 'term', 'purpose'
+]
+
+# Clean and preprocess data
+data = data[raw_variables + [target]].copy()
+data['earliest_cr_line'] = pd.to_datetime(data['earliest_cr_line'], errors='coerce')
+reference_date = pd.to_datetime('2019-01-01')
+data['years_since_cr_line'] = (reference_date - data['earliest_cr_line']).dt.days / 365.25
+data = data.drop('earliest_cr_line', axis=1)
+raw_variables.remove('earliest_cr_line')
+raw_variables.append('years_since_cr_line')
+
+# Convert to numeric where appropriate
+numeric_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bal_ex_mort', 'total_acc',
+                'total_bc_limit', 'tot_hi_cred_lim', 'delinq_2yrs', 'pub_rec', 'pub_rec_bankruptcies',
+                'tax_liens', 'collections_12_mths_ex_med', 'inq_last_6mths', 'years_since_cr_line']
+categorical_vars = ['emp_length', 'home_ownership', 'verification_status', 'term', 'purpose']
+
+for var in numeric_vars:
+    data[var] = pd.to_numeric(data[var], errors='coerce')
+
+# Handle missing values simply for this step
+data[numeric_vars] = data[numeric_vars].fillna(data[numeric_vars].median())
+data[categorical_vars] = data[categorical_vars].fillna(data[categorical_vars].mode().iloc[0])
+
+# Step 2.1: Univariate Analysis
+def calculate_iv(df, feature, target):
+    if df[feature].dtype in ['int64', 'float64']:  # Continuous
+        df[feature + '_bin'] = pd.qcut(df[feature].dropna(), q=10, duplicates='drop')
+        grouped = df.groupby(feature + '_bin', observed=False)[target].agg(['count', 'sum'])
+    else:  # Categorical
+        grouped = df.groupby(feature, observed=False)[target].agg(['count', 'sum'])
+    
+    grouped['non_default'] = grouped['count'] - grouped['sum']
+    total_default = df[target].sum()
+    total_non_default = df[target].count() - total_default
+    grouped['dist_default'] = grouped['sum'] / total_default
+    grouped['dist_non_default'] = grouped['non_default'] / total_non_default
+    grouped['woe'] = np.log(grouped['dist_default'] / grouped['dist_non_default'].replace(0, 0.0001))
+    grouped['iv'] = (grouped['dist_default'] - grouped['dist_non_default']) * grouped['woe']
+    return grouped['iv'].sum()
+
+def calculate_ks(df, feature, target):
+    default = df[df[target] == 1][feature].dropna()
+    non_default = df[df[target] == 0][feature].dropna()
+    ks_stat, _ = ks_2samp(default, non_default)
+    return ks_stat
+
+def calculate_chi2(df, feature, target):
+    contingency_table = pd.crosstab(df[feature], df[target])
+    chi2_stat, p_value, _, _ = chi2_contingency(contingency_table)
+    return p_value
+
+# Compute IV and additional stats
+iv_results = {}
+ks_results = {}
+chi2_results = {}
+
+print("\n=== Univariate Analysis Results ===")
+for var in raw_variables:
+    iv = calculate_iv(data, var, target)
+    iv_results[var] = iv
+    if var in numeric_vars:
+        ks = calculate_ks(data, var, target)
+        ks_results[var] = ks
+        print(f"{var}: IV = {iv:.4f}, KS = {ks:.4f}")
+    else:
+        chi2_p = calculate_chi2(data, var, target)
+        chi2_results[var] = chi2_p
+        print(f"{var}: IV = {iv:.4f}, Chi2 p-value = {chi2_p:.4f}")
+
+# Filter variables with IV > 0.02
+selected_vars = [var for var, iv in iv_results.items() if iv > 0.02]
+print(f"\nVariables retained after IV filtering (IV > 0.02): {len(selected_vars)}")
+print(selected_vars)
+
+# Step 2.3: Multicollinearity Analysis
+# Separate numeric variables for correlation and VIF
+numeric_selected_vars = [var for var in selected_vars if var in numeric_vars]
+categorical_selected_vars = [var for var in selected_vars if var in categorical_vars]
+
+# Correlation matrix for numeric variables only
+correlation_matrix = data[numeric_selected_vars].corr()
+plt.figure(figsize=(12, 8))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')
+plt.title("Correlation Matrix (Numeric Variables Only)")
+plt.show()
+
+# Identify highly correlated pairs (> 0.7)
+high_corr_pairs = []
+for i in range(len(correlation_matrix.columns)):
+    for j in range(i + 1, len(correlation_matrix.columns)):
+        if abs(correlation_matrix.iloc[i, j]) > 0.7:
+            var1, var2 = correlation_matrix.columns[i], correlation_matrix.columns[j]
+            high_corr_pairs.append((var1, var2, correlation_matrix.iloc[i, j]))
+
+print("\nHighly correlated pairs (> 0.7):")
+for pair in high_corr_pairs:
+    var1, var2, corr = pair
+    iv1, iv2 = iv_results[var1], iv_results[var2]
+    keep = var1 if iv1 > iv2 else var2
+    print(f"{var1} (IV={iv1:.4f}) vs {var2} (IV={iv2:.4f}), Corr={corr:.4f} -> Keep {keep}")
+
+# Remove one variable from each highly correlated pair
+vars_to_remove = []
+for var1, var2, _ in high_corr_pairs:
+    iv1, iv2 = iv_results[var1], iv_results[var2]
+    vars_to_remove.append(var1 if iv1 < iv2 else var2)
+numeric_selected_after_corr = [var for var in numeric_selected_vars if var not in vars_to_remove]
+
+# VIF calculation for numeric variables
+vif_data = data[numeric_selected_after_corr].dropna()
+vif_results = {}
+for i, var in enumerate(numeric_selected_after_corr):
+    vif = variance_inflation_factor(vif_data.values, i)
+    vif_results[var] = vif
+
+print("\nVIF Results:")
+for var, vif in vif_results.items():
+    print(f"{var}: VIF = {vif:.2f}")
+
+# Filter out numeric variables with VIF > 5
+final_numeric_vars = [var for var in numeric_selected_after_corr if vif_results.get(var, 0) <= 5]
+
+# Combine with categorical variables (no VIF applied)
+final_selected_vars = final_numeric_vars + categorical_selected_vars
+print(f"\nFinal selected variables after VIF filtering: {len(final_selected_vars)}")
+print(final_selected_vars)
+
+# Summary
+print("\nSummary of Feature Selection:")
+print(f"Initial variables: {len(raw_variables)}")
+print(f"After IV > 0.02: {len(selected_vars)}")
+print(f"After correlation filtering (numeric): {len(numeric_selected_after_corr)}")
+print(f"Final after VIF (numeric + categorical): {len(final_selected_vars)}")
