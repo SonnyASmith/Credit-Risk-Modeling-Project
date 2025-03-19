@@ -14,13 +14,13 @@ print("Class distribution of loan_paid:")
 print(data['loan_paid'].value_counts(normalize=True))
 
 # Step 1: Business-Driven Initial Selection
-# Define target and raw variables (excluding grade, int_rate, installment, and post-origination variables)
+# Define target and raw variables (including total_il_high_credit_limit and disbursement_method)
 target = 'loan_paid'
 raw_variables = [
     'loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bal_ex_mort', 'total_acc', 'total_bc_limit',
-    'tot_hi_cred_lim', 'delinq_2yrs', 'pub_rec', 'pub_rec_bankruptcies', 'tax_liens',
-    'collections_12_mths_ex_med', 'inq_last_6mths', 'earliest_cr_line', 'emp_length',
-    'home_ownership', 'verification_status', 'term', 'purpose'
+    'tot_hi_cred_lim', 'total_il_high_credit_limit', 'delinq_2yrs', 'pub_rec', 'pub_rec_bankruptcies',
+    'tax_liens', 'collections_12_mths_ex_med', 'inq_last_6mths', 'earliest_cr_line', 'emp_length',
+    'home_ownership', 'verification_status', 'term', 'purpose', 'disbursement_method'
 ]
 
 # Clean and preprocess data
@@ -34,9 +34,11 @@ raw_variables.append('years_since_cr_line')
 
 # Convert to numeric where appropriate
 numeric_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bal_ex_mort', 'total_acc',
-                'total_bc_limit', 'tot_hi_cred_lim', 'delinq_2yrs', 'pub_rec', 'pub_rec_bankruptcies',
-                'tax_liens', 'collections_12_mths_ex_med', 'inq_last_6mths', 'years_since_cr_line']
-categorical_vars = ['emp_length', 'home_ownership', 'verification_status', 'term', 'purpose']
+                'total_bc_limit', 'tot_hi_cred_lim', 'total_il_high_credit_limit', 'delinq_2yrs',
+                'pub_rec', 'pub_rec_bankruptcies', 'tax_liens', 'collections_12_mths_ex_med',
+                'inq_last_6mths', 'years_since_cr_line']
+categorical_vars = ['emp_length', 'home_ownership', 'verification_status', 'term', 'purpose',
+                    'disbursement_method']
 
 for var in numeric_vars:
     data[var] = pd.to_numeric(data[var], errors='coerce')
