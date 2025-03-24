@@ -1,0 +1,116 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from scipy.stats import ks_2samp
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+from sklearn.inspection import permutation_importance
+import seaborn as sns
+import matplotlib.pyplot as plt
+from google.colab import files
+
+# Step 1: Upload and load the data
+uploaded = files.upload()
+data = pd.read_excel('resampled_loan_data.xlsx')
+print("Class distribution of loan_paid:")
+print(data['loan_paid'].value_counts(normalize=True))
+
+# Define target and variables (9 selected + purpose for testing)
+target = 'loan_paid'
+selected_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bc_limit', 'tot_hi_cred_lim',
+                 'home_ownership', 'verification_status', 'term']
+all_vars = selected_vars + ['purpose']
+numeric_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bc_limit', 'tot_hi_cred_lim']
+categorical_vars = ['home_ownership', 'verification_status', 'term', 'purpose']
+
+# Preprocess data
+data = data[all_vars + [target]].copy()
+for var in numeric_vars:
+    data[var] = pd.to_numeric(data[var], errors='coerce')
+data[numeric_vars] = data[numeric_vars].fillna(data[numeric_vars].median())
+data[categorical_vars] = data[categorical_vars].fillna(data[categorical_vars].mode().iloc[0])
+
+# Test 1: Chi-Square Test
+print("\n=== Test 1: Chi-Square Test for purpose ===")
+def calculate_chi2(df, feature, target):
+    contingency_table = pd.crosstab(df[feature], df[target])
+    chi2_stat, p_value, _, _ = chi2_contingency(contingency_table)
+    return p_value
+
+chi2_p = calculate_chi2(data, 'purpose', target)
+print(f"Chi2 p-value for purpose: {chi2_p:.4f}")
+if chi2_p < 0.10:
+    print("Significant at p < 0.10, suggesting some association with loan_paid.")
+else:
+    print("Not significant at p < 0.10, but closeness to threshold warrants further checks.")
+
+# Test 2: Feature Importance from Random Forest
+print("\n=== Test 2: Feature Importance from Random Forest ===")
+X_rf = pd.get_dummies(data[all_vars], drop_first=True)  # One-hot encode categoricals
+y_rf = data[target]
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_rf, y_rf)
+importances = pd.Series(rf.feature_importances_, index=X_rf.columns).sort_values(ascending=False)
+print("Feature Importances:")
+print(importances)
+purpose_cols = [col for col in importances.index if 'purpose' in col]
+purpose_importance = importances[purpose_cols].sum()
+print(f"Total importance of purpose (sum of encoded categories): {purpose_importance:.4f}")
+
+# Test 3: Correlation with Other Numeric Predictors
+print("\n=== Test 3: Correlation with Other Numeric Predictors ===")
+# Convert purpose to a numeric proxy (e.g., average loan_paid per category)
+purpose_numeric = data.groupby('purpose')[target].mean()
+data['purpose_numeric'] = data['purpose'].map(purpose_numeric)
+correlations = data[numeric_vars].corrwith(data['purpose_numeric'], method='spearman')
+print("Spearman Correlations with purpose (numeric proxy):")
+print(correlations)
+print("Note: Low correlations suggest purpose adds unique information.")
+
+# Test 4: Distribution Analysis and Visualization
+print("\n=== Test 4: Distribution Analysis and Visualization ===")
+default_rates = data.groupby('purpose', observed=True)[target].mean().sort_values(ascending=False)
+print("Proportion of loans paid (1) by purpose (sorted by repayment rate):")
+print(default_rates)
+plt.figure(figsize=(12, 6))
+default_rates.plot(kind='bar', color='skyblue')
+plt.title('Proportion of Loans Paid by Loan Purpose')
+plt.ylabel('Proportion Paid (1)')
+plt.xlabel('Loan Purpose')
+plt.xticks(rotation=45, ha='right')
+plt.tight_layout()
+plt.show()
+
+# Test 5: Model Performance Impact (Incremental Addition)
+print("\n=== Test 5: Model Performance Impact ===")
+X_base = pd.get_dummies(data[selected_vars], drop_first=True)
+X_plus_purpose = pd.get_dummies(data[all_vars], drop_first=True)
+y = data[target]
+
+X_train_base, X_test_base, y_train, y_test = train_test_split(X_base, y, test_size=0.2, random_state=42)
+X_train_plus, X_test_plus, _, _ = train_test_split(X_plus_purpose, y, test_size=0.2, random_state=42)
+
+rf_base = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_base.fit(X_train_base, y_train)
+auc_base = roc_auc_score(y_test, rf_base.predict_proba(X_test_base)[:, 1])
+print(f"Baseline AUC (without purpose): {auc_base:.4f}")
+
+rf_plus = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_plus.fit(X_train_plus, y_train)
+auc_plus = roc_auc_score(y_test, rf_plus.predict_proba(X_test_plus)[:, 1])
+print(f"AUC with purpose: {auc_plus:.4f}")
+print(f"Difference in AUC: {auc_plus - auc_base:.4f}")
+if auc_plus > auc_base:
+    print("Adding purpose improves model performance.")
+else:
+    print("No improvement from adding purpose.")
+
+# Summary and Recommendation
+print("\n=== Summary and Recommendation ===")
+print("purpose IV: 0.0192 (close to 0.02 threshold)")  # Hardcoded from prior output
+print(f"Chi2 p-value: {chi2_p:.4f}")
+print(f"RF Feature Importance: {purpose_importance:.4f}")
+print(f"AUC Difference: {auc_plus - auc_base:.4f}")
+print("Review the distribution plot and metrics above.")
+print("Recommendation: Include purpose if it shows a trend in default rates, decent importance, or AUC lift, given its business relevance.")
