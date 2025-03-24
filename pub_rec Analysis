@@ -1,0 +1,114 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from scipy.stats import ks_2samp
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+from sklearn.inspection import permutation_importance
+import seaborn as sns
+import matplotlib.pyplot as plt
+from google.colab import files
+
+# Step 1: Upload and load the data
+uploaded = files.upload()
+data = pd.read_excel('resampled_loan_data.xlsx')
+print("Class distribution of loan_paid:")
+print(data['loan_paid'].value_counts(normalize=True))
+
+# Define target and variables (9 selected + pub_rec for testing)
+target = 'loan_paid'
+selected_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bc_limit', 'tot_hi_cred_lim',
+                 'home_ownership', 'verification_status', 'term']
+all_vars = selected_vars + ['pub_rec']
+numeric_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bc_limit', 'tot_hi_cred_lim', 'pub_rec']
+categorical_vars = ['home_ownership', 'verification_status', 'term']
+
+# Preprocess data
+data = data[all_vars + [target]].copy()
+for var in numeric_vars:
+    data[var] = pd.to_numeric(data[var], errors='coerce')
+data[numeric_vars] = data[numeric_vars].fillna(data[numeric_vars].median())
+data[categorical_vars] = data[categorical_vars].fillna(data[categorical_vars].mode().iloc[0])
+
+# Test 1: Kolmogorov-Smirnov (KS) Test
+print("\n=== Test 1: KS Test for pub_rec ===")
+def calculate_ks(df, feature, target):
+    default = df[df[target] == 1][feature].dropna()
+    non_default = df[df[target] == 0][feature].dropna()
+    ks_stat, p_value = ks_2samp(default, non_default)
+    return ks_stat, p_value
+
+ks_stat, ks_p = calculate_ks(data, 'pub_rec', target)
+print(f"KS Statistic for pub_rec: {ks_stat:.4f}, p-value: {ks_p:.4f}")
+if ks_p < 0.10:
+    print("Significant at p < 0.10, suggesting some distributional difference between paid and unpaid loans.")
+else:
+    print("Not significant at p < 0.10, but closeness to threshold warrants further checks.")
+
+# Test 2: Feature Importance from Random Forest
+print("\n=== Test 2: Feature Importance from Random Forest ===")
+X_rf = pd.get_dummies(data[all_vars], drop_first=True)  # One-hot encode categoricals
+y_rf = data[target]
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_rf, y_rf)
+importances = pd.Series(rf.feature_importances_, index=X_rf.columns).sort_values(ascending=False)
+print("Feature Importances:")
+print(importances)
+pub_rec_importance = importances.get('pub_rec', 0)  # Numeric, not encoded, so direct access
+print(f"Importance of pub_rec: {pub_rec_importance:.4f}")
+
+# Test 3: Correlation with Other Numeric Predictors
+print("\n=== Test 3: Correlation with Other Numeric Predictors ===")
+correlations = data[numeric_vars].corr(method='pearson')['pub_rec'].drop('pub_rec')
+print("Pearson Correlations with pub_rec:")
+print(correlations)
+print("Note: Low correlations suggest pub_rec adds unique information.")
+
+# Test 4: Distribution Analysis and Visualization
+print("\n=== Test 4: Distribution Analysis and Visualization ===")
+# Bin pub_rec for visualization (since it’s numeric and likely sparse)
+data['pub_rec_binned'] = pd.cut(data['pub_rec'], bins=[-0.1, 0, 1, 2, float('inf')], labels=['0', '1', '2', '3+'])
+default_rates = data.groupby('pub_rec_binned', observed=True)[target].mean()
+print("Proportion of loans paid (1) by pub_rec:")
+print(default_rates)
+plt.figure(figsize=(10, 6))
+default_rates.plot(kind='bar', color='skyblue')
+plt.title('Proportion of Loans Paid by Public Records')
+plt.ylabel('Proportion Paid (1)')
+plt.xlabel('Number of Public Records')
+plt.xticks(rotation=0)
+plt.show()
+
+# Test 5: Model Performance Impact (Incremental Addition)
+print("\n=== Test 5: Model Performance Impact ===")
+X_base = pd.get_dummies(data[selected_vars], drop_first=True)
+X_plus_pub_rec = pd.get_dummies(data[all_vars], drop_first=True)
+y = data[target]
+
+X_train_base, X_test_base, y_train, y_test = train_test_split(X_base, y, test_size=0.2, random_state=42)
+X_train_plus, X_test_plus, _, _ = train_test_split(X_plus_pub_rec, y, test_size=0.2, random_state=42)
+
+rf_base = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_base.fit(X_train_base, y_train)
+auc_base = roc_auc_score(y_test, rf_base.predict_proba(X_test_base)[:, 1])
+print(f"Baseline AUC (without pub_rec): {auc_base:.4f}")
+
+rf_plus = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_plus.fit(X_train_plus, y_train)
+auc_plus = roc_auc_score(y_test, rf_plus.predict_proba(X_test_plus)[:, 1])
+print(f"AUC with pub_rec: {auc_plus:.4f}")
+print(f"Difference in AUC: {auc_plus - auc_base:.4f}")
+if auc_plus > auc_base:
+    print("Adding pub_rec improves model performance.")
+else:
+    print("No improvement from adding pub_rec.")
+
+# Summary and Recommendation
+print("\n=== Summary and Recommendation ===")
+print("pub_rec IV: 0.0016 (below 0.02 threshold)")  # Hardcoded from prior output
+print(f"KS p-value: {ks_p:.4f}")
+print(f"RF Feature Importance: {pub_rec_importance:.4f}")
+print(f"AUC Difference: {auc_plus - auc_base:.4f}")
+print("Review the distribution plot and metrics above.")
+print("Recommendation: Include pub_rec if it shows a trend in default rates, decent importance, or AUC lift, given its business relevance.")
