@@ -1,0 +1,125 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from scipy.stats import chi2_contingency
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+from sklearn.inspection import permutation_importance
+import seaborn as sns
+import matplotlib.pyplot as plt
+from google.colab import files
+
+# Step 1: Upload and load the data
+uploaded = files.upload()
+data = pd.read_excel('resampled_loan_data.xlsx')
+print("Class distribution of loan_paid:")
+print(data['loan_paid'].value_counts(normalize=True))
+
+# Define target and variables (9 selected + emp_length for testing)
+target = 'loan_paid'
+selected_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bc_limit', 'tot_hi_cred_lim',
+                 'home_ownership', 'verification_status', 'term']
+all_vars = selected_vars + ['emp_length']
+numeric_vars = ['loan_amnt', 'annual_inc', 'dti', 'revol_util', 'total_bc_limit', 'tot_hi_cred_lim']
+categorical_vars = ['home_ownership', 'verification_status', 'term', 'emp_length']
+
+# Preprocess data
+data = data[all_vars + [target]].copy()
+for var in numeric_vars:
+    data[var] = pd.to_numeric(data[var], errors='coerce')
+data[numeric_vars] = data[numeric_vars].fillna(data[numeric_vars].median())
+data[categorical_vars] = data[categorical_vars].fillna(data[categorical_vars].mode().iloc[0])
+
+# Test 1: Chi-Square Test (Already Calculated, Reviewing Result)
+def calculate_chi2(df, feature, target):
+    contingency_table = pd.crosstab(df[feature], df[target])
+    chi2_stat, p_value, _, _ = chi2_contingency(contingency_table)
+    return p_value
+
+print("\n=== Test 1: Chi-Square Test for emp_length ===")
+chi2_p = calculate_chi2(data, 'emp_length', target)
+print(f"Chi2 p-value for emp_length: {chi2_p:.4f}")
+if chi2_p < 0.10:
+    print("Significant at p < 0.10, suggesting some association with loan_paid.")
+else:
+    print("Not significant at p < 0.10, but closeness to threshold warrants further checks.")
+
+# Test 2: Feature Importance from Random Forest
+print("\n=== Test 2: Feature Importance from Random Forest ===")
+X_rf = pd.get_dummies(data[all_vars], drop_first=True)  # One-hot encode categoricals
+y_rf = data[target]
+rf = RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(X_rf, y_rf)
+importances = pd.Series(rf.feature_importances_, index=X_rf.columns).sort_values(ascending=False)
+print("Feature Importances:")
+print(importances)
+emp_length_cols = [col for col in importances.index if 'emp_length' in col]
+emp_length_importance = importances[emp_length_cols].sum()
+print(f"Total importance of emp_length (sum of encoded categories): {emp_length_importance:.4f}")
+
+# Test 3: Correlation with Other Predictors
+print("\n=== Test 3: Correlation with Other Numeric Predictors ===")
+emp_length_numeric = data['emp_length'].replace({'< 1 year': 0, '1 year': 1, '2 years': 2, '3 years': 3,
+                                                 '4 years': 4, '5 years': 5, '6 years': 6, '7 years': 7,
+                                                 '8 years': 8, '9 years': 9, '10+ years': 10})
+correlations = data[numeric_vars].corrwith(emp_length_numeric, method='spearman')
+print("Spearman Correlations with emp_length:")
+print(correlations)
+print("Note: Low correlations suggest emp_length adds unique information.")
+
+# Test 4: Distribution Analysis and Visualization (with custom order)
+print("\n=== Test 4: Distribution Analysis and Visualization ===")
+# Define the correct order for emp_length categories
+emp_length_order = ['< 1 year', '1 year', '2 years', '3 years', '4 years', '5 years', 
+                    '6 years', '7 years', '8 years', '9 years', '10+ years']
+# Convert emp_length to a categorical type with the specified order
+data['emp_length'] = pd.Categorical(data['emp_length'], categories=emp_length_order, ordered=True)
+# Calculate default rates with the ordered categories
+default_rates = data.groupby('emp_length', observed=True)[target].mean()
+print("Proportion of loans paid (1) by emp_length:")
+print(default_rates)
+# Plot with ordered categories
+plt.figure(figsize=(10, 6))
+default_rates.plot(kind='bar', color='skyblue')
+plt.title('Proportion of Loans Paid by Employment Length')
+plt.ylabel('Proportion Paid (1)')
+plt.xlabel('Employment Length')
+plt.xticks(rotation=45)
+plt.show()
+
+# Test 5: Model Performance Impact (Incremental Addition)
+print("\n=== Test 5: Model Performance Impact ===")
+X_base = pd.get_dummies(data[selected_vars], drop_first=True)
+X_plus_emp = pd.get_dummies(data[all_vars], drop_first=True)
+y = data[target]
+
+# Split data
+X_train_base, X_test_base, y_train, y_test = train_test_split(X_base, y, test_size=0.2, random_state=42)
+X_train_plus, X_test_plus, _, _ = train_test_split(X_plus_emp, y, test_size=0.2, random_state=42)
+
+# Train baseline model
+rf_base = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_base.fit(X_train_base, y_train)
+auc_base = roc_auc_score(y_test, rf_base.predict_proba(X_test_base)[:, 1])
+print(f"Baseline AUC (without emp_length): {auc_base:.4f}")
+
+# Train model with emp_length
+rf_plus = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_plus.fit(X_train_plus, y_train)
+auc_plus = roc_auc_score(y_test, rf_plus.predict_proba(X_test_plus)[:, 1])
+print(f"AUC with emp_length: {auc_plus:.4f}")
+print(f"Difference in AUC: {auc_plus - auc_base:.4f}")
+if auc_plus > auc_base:
+    print("Adding emp_length improves model performance.")
+else:
+    print("No improvement from adding emp_length.")
+
+# Summary and Recommendation
+print("\n=== Summary and Recommendation ===")
+print(f"emp_length IV: 0.0192 (close to 0.02 threshold)")
+print(f"Chi2 p-value: {chi2_p:.4f}")
+print(f"RF Feature Importance: {emp_length_importance:.4f}")
+print(f"AUC Difference: {auc_plus - auc_base:.4f}")
+print("Review the distribution plot and metrics above.")
+print("Recommendation: Include emp_length if it shows a trend in default rates, decent importance, or AUC lift, given its business relevance.")
