@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Accessibility improvements for color-blind users */
+@layer components {
+  .high-contrast-text {
+    @apply text-neutral-900 font-medium;
+  }
+  
+  .a11y-icon {
+    @apply text-blue-800;
+  }
+  
+  .a11y-button {
+    @apply bg-blue-800 hover:bg-blue-900 text-white font-medium;
+  }
+}
