@@ -522,7 +522,7 @@ class BusinessObjectiveModels:
             
         return self.models[model_name]['trainer'].predict_proba(X)
     
-    def get_pricing_tiers(self, X, n_tiers=5, base_rate=5.0, max_rate=25.0):
+    def get_pricing_tiers(self, X, n_tiers=5, base_rate=5.0, max_rate=25.0, max_pd_threshold=0.40):
         """
         Calculates risk-based pricing tiers based on default probabilities.
         
@@ -531,15 +531,19 @@ class BusinessObjectiveModels:
             n_tiers (int): Number of pricing tiers
             base_rate (float): Interest rate for lowest risk tier
             max_rate (float): Interest rate for highest risk tier
+            max_pd_threshold (float): Maximum acceptable probability of default
             
         Returns:
-            pd.DataFrame: DataFrame with default probabilities and interest rates
+            pd.DataFrame: DataFrame with default probabilities, interest rates, and rejection flags
         """
         if 'risk_based_pricing' not in self.models:
             raise ValueError("Risk-based pricing model not created yet.")
             
         # Get default probabilities
         proba = self.predict_proba('risk_based_pricing', X)
+        
+        # Create rejection mask for high-risk applicants
+        rejection_mask = proba > max_pd_threshold
         
         # Create tier thresholds (quantiles)
         tier_thresholds = np.linspace(0, 1, n_tiers + 1)[1:-1]
@@ -553,13 +557,13 @@ class BusinessObjectiveModels:
         rate_step = (max_rate - base_rate) / (n_tiers - 1)
         interest_rates = base_rate + (tiers * rate_step)
         
-        # Return as DataFrame
+        # Return as DataFrame with rejection flag
         return pd.DataFrame({
             'default_probability': proba,
             'risk_tier': tiers + 1,  # 1-indexed tiers
-            'interest_rate': interest_rates
+            'interest_rate': interest_rates,
+            'rejected': rejection_mask  # True if applicant should be rejected
         })
-
 
 class CreditModelEvaluator:
     """
