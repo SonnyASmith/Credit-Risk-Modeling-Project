@@ -50,7 +50,7 @@ class CreditDataProcessor:
     credit risk models with flexible feature selection.
     """
 
-    def __init__(self, data_path="preprocessed_loan_data.csv", target_col="loan_paid"):
+    def __init__(self, data_path="FINAL_DATA.csv", target_col="loan_paid"):
         """
         Initialize the data processor.
 
@@ -302,10 +302,10 @@ class BusinessObjectiveModels:
         """
         # Define features emphasizing positive indicators
         features = [
-            "annual_inc",
-            "total_bc_limit", 
+            "log_annual_inc",
+            "boxcox_total_bc_limit", 
             "emp_length_woe",
-            "tot_hi_cred_lim",
+            "boxcox_tot_hi_cred_lim",
             "purpose_debt_consolidation",
             "purpose_credit_card",
             "home_ownership_MORTGAGE"
@@ -324,7 +324,7 @@ class BusinessObjectiveModels:
         self.models['market_expansion'] = {
             'trainer': model_trainer,
             'features': features,
-            'threshold': 0.6,  
+            'threshold': 0.65,  
             'description': "Optimized for market expansion, prioritizing loan approvals"
         }
         
@@ -342,10 +342,11 @@ class BusinessObjectiveModels:
         """
         # Define features emphasizing risk indicators
         features = [
-            "dti",
-            "payment_to_inc",
+            "99dti",
+            "log_annual_inc",
+            "99pti",
             "revol_util",
-            "loan_amnt",
+            "boxcox_loan_amnt",
             "term_60",
             "purpose_small_business",
             "purpose_educational",
@@ -365,7 +366,7 @@ class BusinessObjectiveModels:
         self.models['default_prevention'] = {
             'trainer': model_trainer,
             'features': features,
-            'threshold': 0.4,
+            'threshold': 0.35,
             'description': "Optimized for default prevention, prioritizing loan quality"
         }
         
@@ -382,13 +383,15 @@ class BusinessObjectiveModels:
         """
         # Define features emphasizing wealth and stability
         features = [
-            "annual_inc",
-            "tot_hi_cred_lim",
-            "total_bc_limit",
-            "home_ownership_MORTGAGE", 
-            "emp_length_woe",
-            "purpose_home_improvement",
-            "purpose_major_purchase"
+            "99dti",
+            "log_annual_inc",
+            "99pti",
+            "revol_util",
+            "boxcox_loan_amnt",
+            "term_60",
+            "purpose_small_business",
+            "purpose_educational",
+            "home_ownership_RENT"
         ]
         
         # Prepare data with these features
@@ -403,7 +406,7 @@ class BusinessObjectiveModels:
         self.models['high_value_customer'] = {
             'trainer': model_trainer,
             'features': features,
-            'threshold': 0.55,
+            'threshold': 0.45,
             'description': "Optimized for high-value customer acquisition"
         }
         
@@ -421,14 +424,16 @@ class BusinessObjectiveModels:
         """
         # Use a comprehensive set of predictive features
         features = [
-            "payment_to_inc",
-            "dti",
-            "annual_inc",
-            "loan_amnt",
+            "99pti",
+            "99dti",
+            "log_annual_inc",
+            "boxcox_loan_amnt",
             "revol_util",
-            "total_bc_limit",
-            "tot_hi_cred_lim",
+            "boxcox_total_bc_limit",
+            "boxcox_tot_hi_cred_lim",
             "emp_length_woe",
+            "delinq_2yrs_woe",
+            "inq_last_6mths_woe",
             "term_60",
             "home_ownership_RENT",
             "home_ownership_MORTGAGE",
@@ -1086,7 +1091,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
 
     # Step 1: Process data
-    data_processor = CreditDataProcessor("preprocessed_loan_data.csv")
+    data_processor = CreditDataProcessor("FINAL_DATA.csv")
     data_processor.load_data()
 
     # Step 2: Create business-specific models
