@@ -546,25 +546,40 @@ class BusinessObjectiveModels:
         # Create rejection mask for high-risk applicants
         rejection_mask = proba > max_pd_threshold
         
-        # Create tier thresholds (quantiles)
-        tier_thresholds = np.linspace(0, 1, n_tiers + 1)[1:-1]
+        # Filter to get accepted probabilities
+        accepted_proba = proba[~rejection_mask]
         
-        # Assign tiers based on probabilities
-        tiers = np.zeros(len(proba), dtype=int)
-        for i, threshold in enumerate(tier_thresholds, 1):
-            tiers = np.where(proba >= threshold, i, tiers)
+        # Initialize tiers and interest rates arrays
+        tiers = np.zeros(len(proba))
+        interest_rates = np.zeros(len(proba))
         
-        # Calculate interest rates
-        rate_step = (max_rate - base_rate) / (n_tiers - 1)
-        interest_rates = base_rate + (tiers * rate_step)
+        # Only process accepted applicants
+        if len(accepted_proba) > 0:
+            # Create tier thresholds using percentiles of accepted probabilities
+            percentiles = np.linspace(0, 100, n_tiers + 1)[1:-1]
+            tier_thresholds = np.percentile(accepted_proba, percentiles)
+            
+            # Assign tiers to accepted applicants
+            accepted_tiers = np.zeros(len(accepted_proba))
+            for i, threshold in enumerate(tier_thresholds, 1):
+                accepted_tiers = np.where(accepted_proba >= threshold, i, accepted_tiers)
+            
+            # Calculate interest rates for accepted applicants
+            rate_step = (max_rate - base_rate) / (n_tiers - 1)
+            accepted_interest_rates = base_rate + (accepted_tiers * rate_step)
+            
+            # Assign back to full arrays
+            tiers[~rejection_mask] = accepted_tiers + 1  # 1-indexed tiers
+            interest_rates[~rejection_mask] = accepted_interest_rates
         
-        # Return as DataFrame with rejection flag
+        # Return as DataFrame
         return pd.DataFrame({
             'default_probability': proba,
-            'risk_tier': tiers + 1,  # 1-indexed tiers
+            'risk_tier': tiers,
             'interest_rate': interest_rates,
-            'rejected': rejection_mask  # True if applicant should be rejected
+            'rejected': rejection_mask
         })
+
 
 class CreditModelEvaluator:
     """
