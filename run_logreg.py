@@ -266,6 +266,7 @@ class CreditModelTrainer:
             'coefficient': coefs
         })
         return importance_df.sort_values('importance', ascending=False)
+    
 
 
 class BusinessObjectiveModels:
@@ -308,7 +309,8 @@ class BusinessObjectiveModels:
             "boxcox_tot_hi_cred_lim",
             "purpose_debt_consolidation",
             "purpose_credit_card",
-            "home_ownership_MORTGAGE"
+            "home_ownership_MORTGAGE",
+            "term_60"
         ]
         
         # Prepare data with these features
@@ -324,7 +326,7 @@ class BusinessObjectiveModels:
         self.models['market_expansion'] = {
             'trainer': model_trainer,
             'features': features,
-            'threshold': 0.65,  
+            'threshold': 0.50,  
             'description': "Optimized for market expansion, prioritizing loan approvals"
         }
         
@@ -343,7 +345,6 @@ class BusinessObjectiveModels:
         # Define features emphasizing risk indicators
         features = [
             "99dti",
-            "log_annual_inc",
             "99pti",
             "revol_util",
             "boxcox_loan_amnt",
@@ -384,11 +385,11 @@ class BusinessObjectiveModels:
         # Define features emphasizing wealth and stability
         features = [
             "99dti",
-            "log_annual_inc",
             "99pti",
             "revol_util",
-            "boxcox_loan_amnt",
             "term_60",
+            "delinq_2yrs_woe",
+            "inq_last_6mths_woe",
             "purpose_small_business",
             "purpose_educational",
             "home_ownership_RENT"
@@ -463,7 +464,7 @@ class BusinessObjectiveModels:
         self.models['risk_based_pricing'] = {
             'trainer': model_trainer,
             'features': features,
-            'threshold': None,  # Use raw probabilities instead
+            'threshold': 0.40,  # Use raw probabilities instead
             'description': "Optimized for risk-based pricing, using probability tiers"
         }
         
@@ -1118,5 +1119,19 @@ if __name__ == "__main__":
     evaluator.plot_roc_curve(add_thresholds=True)
     evaluator.plot_precision_recall_curve()
     evaluator.plot_confusion_matrices_comparison()
+    evaluator.plot_roc_curve(
+    model_names=['market_expansion', 'default_prevention', 'risk_based_pricing'], 
+    add_thresholds=True
+)
 
     print("\nAll evaluations completed successfully!")
+    # Print coefficients for each model
+for model_name, model_info in business_models.models.items():
+    trainer = model_info['trainer']
+    features = model_info['features']
+    print(f"\n===== COEFFICIENTS FOR {model_name.upper()} MODEL =====")
+    coef_df = trainer.get_feature_importance(features)
+    print(coef_df)
+    
+    # Optionally visualize
+    evaluator.plot_feature_importance(trainer, features)
