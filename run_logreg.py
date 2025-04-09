@@ -1150,3 +1150,81 @@ for model_name, model_info in business_models.models.items():
     
     # Optionally visualize
     evaluator.plot_feature_importance(trainer, features)
+
+
+
+
+# GETTING THE MODEL COEFFICIENT AND INTERCEPT INTO JSON TO BE USED IN TYPESCRIPT BACKEND
+
+import json
+import numpy as np
+
+def export_model_parameters(business_models, model_name, output_file):
+    """
+    Export basic model parameters to a JSON file for use in TypeScript implementation.
+    
+    Args:
+        business_models: BusinessObjectiveModels instance with trained models
+        model_name: Name of the model to export (e.g., 'risk_based_pricing')
+        output_file: Path to save the JSON file
+    """
+    if model_name not in business_models.models:
+        raise ValueError(f"Model '{model_name}' not found. Available models: {list(business_models.models.keys())}")
+    
+    # Get model info
+    model_info = business_models.models[model_name]
+    trainer = model_info['trainer']
+    features = model_info['features']
+    threshold = model_info['threshold']
+    
+    # Extract coefficients and intercept
+    model = trainer.model
+    coefficients = model.coef_[0].tolist()  # Convert to list for JSON serialization
+    intercept = model.intercept_[0]
+    
+    # Create simple model params dictionary
+    model_params = {
+        'name': model_name,
+        'features': features,
+        'coefficients': coefficients,
+        'intercept': intercept,
+        'threshold': threshold
+    }
+    
+    # Custom NumPy encoder for JSON serialization
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, np.ndarray):
+                return obj.tolist()
+            if isinstance(obj, np.integer):
+                return int(obj)
+            if isinstance(obj, np.floating):
+                return float(obj)
+            return json.JSONEncoder.default(self, obj)
+    
+    # Write to JSON file
+    with open(output_file, 'w') as f:
+        json.dump(model_params, f, cls=NumpyEncoder, indent=2)
+    
+    print(f"Model parameters for '{model_name}' exported to {output_file}")
+    return model_params
+
+# Add this code at the end of the main block in run_logreg.py
+if __name__ == "__main__":
+    # After creating and evaluating all models
+    # Export the risk-based pricing model parameters
+    model_params = export_model_parameters(
+        business_models, 
+        'risk_based_pricing', 
+        'risk_based_pricing_model.json'
+    )
+    
+    # Print a sample of the exported parameters
+    print("\n===== EXPORTED MODEL PARAMETERS SAMPLE =====")
+    print(f"Model: {model_params['name']}")
+    print(f"Features: {len(model_params['features'])} features")
+    print(f"First 3 features: {model_params['features'][:3]}")
+    print(f"All features: {model_params['features']}")
+    print(f"First 3 coefficients: {model_params['coefficients'][:3]}")
+    print(f"Intercept: {model_params['intercept']}")
+    print(f"Threshold: {model_params['threshold']}")
