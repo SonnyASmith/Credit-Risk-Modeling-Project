@@ -21,12 +21,10 @@ interface ResultsViewProps {
 
 function formatPurpose(purpose: string): string {
   const mapping: Record<string, string> = {
-    home: "Home Purchase/Refinance",
-    auto: "Auto Loan",
-    personal: "Personal Loan",
-    education: "Education",
-    business: "Business",
-    other: "Other",
+    "credit_card": "Credit Card Refinancing",
+    "debt_consolidation": "Debt Consolidation",
+    "education": "Education",
+    "small_business": "Small Business"
   };
   return mapping[purpose] || purpose;
 }

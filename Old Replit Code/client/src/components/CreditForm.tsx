@@ -15,6 +15,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +28,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { HelpCircleIcon } from "lucide-react";
 
 interface CreditFormProps {
   onSubmitStart: () => void;
@@ -42,26 +50,45 @@ export default function CreditForm({
   const form = useForm<LoanApplicationFormValues>({
     resolver: zodResolver(loanApplicationFormSchema),
     defaultValues: {
-      annualIncome: "",
-      creditScore: 650,
-      creditScoreRange: undefined, // Set to blank/undefined as requested
-      loanAmount: "",
-      loanPurpose: "personal",
+      annualIncome: 0,
+      loanAmount: 0,
+      loanPurpose: "debt_consolidation",
       employmentStatus: "full-time",
-      yearsEmployed: "",
+      yearsEmployed: 0,
       agreement: false,
+      homeOwnership: "rent",
+      loanTerm: "60",
+      revolvingUtilization: 50,
+      totalCreditCardLimit: 0,
+      totalHighCreditLimit: 0,
+      delinquencies2Years: 0,
+      inquiries6Months: 0,
     },
   });
 
   const submitMutation = useMutation({
     mutationFn: async (data: Omit<LoanApplicationFormValues, "agreement">) => {
-      const response = await apiRequest("POST", "/api/applications", data);
+      // Log the data being sent to API
+      console.log("Submitting application data:", data);
+      
+      // Map loan purpose values to what the model expects
+      const mappedData = {
+        ...data,
+        // Map front-end purposes to back-end purposes
+        loanPurpose: mapLoanPurpose(data.loanPurpose),
+      };
+      
+      console.log("Mapped application data:", mappedData);
+      
+      const response = await apiRequest("POST", "/api/applications", mappedData);
       return response.json() as Promise<LoanApplication>;
     },
     onSuccess: (data) => {
+      console.log("Application completed successfully:", data);
       onApplicationComplete(data);
     },
     onError: (error) => {
+      console.error("Application submission error:", error);
       toast({
         title: "Error submitting application",
         description: error.message || "Please try again later.",
@@ -70,17 +97,46 @@ export default function CreditForm({
     },
   });
 
+  // Map frontend loan purpose values to what the model expects
+  const mapLoanPurpose = (purpose: string): string => {
+    const purposeMap: Record<string, string> = {
+      "credit_card": "credit_card",
+      "debt_consolidation": "debt_consolidation",
+      "business": "small_business",
+      "education": "educational"
+    };
+    return purposeMap[purpose] || purpose;
+  };
+
   const onSubmit = (values: LoanApplicationFormValues) => {
     onSubmitStart();
 
-    // Remove the agreement field and creditScoreRange field as they're not part of the API schema
-    const { agreement, creditScoreRange, ...applicationData } = values;
+    // Remove the agreement field as it's not part of the API schema
+    const { agreement, ...applicationData } = values;
 
     // Submit the application after a short delay to show the processing view
     setTimeout(() => {
-      submitMutation.mutate(applicationData as any); // Use 'as any' to bypass type checking as we've verified the data is correct
+      submitMutation.mutate(applicationData as any);
     }, 2000);
   };
+
+  // Helper component for field with tooltip
+  const FieldWithTooltip = ({ label, tooltip, children }: { label: string, tooltip: string, children: React.ReactNode }) => (
+    <div className="flex items-center space-x-2">
+      <span>{label}</span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <HelpCircleIcon className="h-4 w-4 text-neutral-500" />
+          </TooltipTrigger>
+          <TooltipContent className="max-w-sm">
+            <p>{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      {children}
+    </div>
+  );
 
   return (
     <Form {...form}>
@@ -117,33 +173,19 @@ export default function CreditForm({
 
           <FormField
             control={form.control}
-            name="creditScoreRange"
+            name="homeOwnership"
             render={({ field }) => (
               <FormItem className="relative">
                 <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
-                  Credit Score Range
+                  Home Ownership
                 </FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    // Set an appropriate middle value based on the range selected
-                    const ranges = {
-                      "300-549": 425,
-                      "550-649": 600,
-                      "650-699": 675,
-                      "700-749": 725,
-                      "750-850": 800,
-                    };
-                    form.setValue(
-                      "creditScore",
-                      ranges[value as keyof typeof ranges],
-                    );
-                  }}
+                  onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
                     <SelectTrigger className="pt-6 pb-2 px-3 h-14">
-                      <SelectValue placeholder="Select your credit score range" />
+                      <SelectValue placeholder="Select home ownership" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent
@@ -152,22 +194,15 @@ export default function CreditForm({
                     className="max-h-60"
                     side="top"
                   >
-                    <SelectItem value="750-850">Excellent (750-850)</SelectItem>
-                    <SelectItem value="700-749">Very Good (700-749)</SelectItem>
-                    <SelectItem value="650-699">Good (650-699)</SelectItem>
-                    <SelectItem value="550-649">Fair (550-649)</SelectItem>
-                    <SelectItem value="300-549">Poor (300-549)</SelectItem>
+                    <SelectItem value="rent">Rent</SelectItem>
+                    <SelectItem value="mortgage">Mortgage</SelectItem>
+                    <SelectItem value="own">Own</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
-          />
-
-          {/* Hidden credit score field that gets set based on the range */}
-          <input
-            type="hidden"
-            {...form.register("creditScore", { valueAsNumber: true })}
           />
 
           <FormField
@@ -215,14 +250,42 @@ export default function CreditForm({
                     className="max-h-60"
                     side="top"
                   >
-                    <SelectItem value="home">
-                      Home Purchase/Refinance
-                    </SelectItem>
-                    <SelectItem value="auto">Auto Loan</SelectItem>
-                    <SelectItem value="personal">Personal Loan</SelectItem>
+                    <SelectItem value="debt_consolidation">Debt Consolidation</SelectItem>
+                    <SelectItem value="credit_card">Credit Card Refinancing</SelectItem>
                     <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="business">Business</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="business">Small Business</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="loanTerm"
+            render={({ field }) => (
+              <FormItem className="relative">
+                <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
+                  Loan Term
+                </FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="pt-6 pb-2 px-3 h-14">
+                      <SelectValue placeholder="Select loan term" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent
+                    position="popper"
+                    sideOffset={5}
+                    className="max-h-60"
+                    side="top"
+                  >
+                    <SelectItem value="36">36 months (3 years)</SelectItem>
+                    <SelectItem value="60">60 months (5 years)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -293,6 +356,144 @@ export default function CreditForm({
               </FormItem>
             )}
           />
+
+          {/* Advanced Credit Information - Now displayed directly without accordion */}
+          <div className="md:col-span-2 pt-2">
+            <h4 className="text-sm font-medium text-neutral-900 mb-3">
+              Advanced Credit Information (Required)
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-3">
+              {/* New Credit Fields */}
+              
+              <FormField
+                control={form.control}
+                name="revolvingUtilization"
+                render={({ field }) => (
+                  <FormItem className="relative">
+                    <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
+                      Revolving Utilization (%)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        className="pt-6 pb-2 px-3 h-14"
+                        placeholder="Enter revolving utilization"
+                        min={0}
+                        max={100}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Percentage of available credit being used
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="totalCreditCardLimit"
+                render={({ field }) => (
+                  <FormItem className="relative">
+                    <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
+                      Total Credit Card Limit ($)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        className="pt-6 pb-2 px-3 h-14"
+                        placeholder="Enter total credit limit"
+                        min={0}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Sum of all your credit card limits
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="totalHighCreditLimit"
+                render={({ field }) => (
+                  <FormItem className="relative">
+                    <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
+                      Total High Credit Limit ($)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        className="pt-6 pb-2 px-3 h-14"
+                        placeholder="Enter high credit limit"
+                        min={0}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Sum of all your credit limits (including loans)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="delinquencies2Years"
+                render={({ field }) => (
+                  <FormItem className="relative">
+                    <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
+                      Delinquencies (Past 2 Years)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        className="pt-6 pb-2 px-3 h-14"
+                        placeholder="Enter number of delinquencies"
+                        min={0}
+                        step={1}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Number of late payments in the past 2 years
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="inquiries6Months"
+                render={({ field }) => (
+                  <FormItem className="relative">
+                    <FormLabel className="absolute left-3 top-2 text-sm text-neutral-700 peer-focus:text-primary transition-all">
+                      Inquiries (Past 6 Months)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="number"
+                        className="pt-6 pb-2 px-3 h-14"
+                        placeholder="Enter number of inquiries"
+                        min={0}
+                        step={1}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Number of credit inquiries in the past 6 months
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
 
           {/* Agreement Section */}
           <div className="md:col-span-2 mt-4">
