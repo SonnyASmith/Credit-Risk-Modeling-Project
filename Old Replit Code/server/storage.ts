@@ -94,9 +94,9 @@ export class MemStorage implements IStorage {
           const minRate = 4.5;
           const maxRate = 15.0;
           
-          // Linear mapping from default probability to interest rate
+          // Logarithmic mapping from default probability to interest rate
           const riskFactor = defaultProbability / maxProbability;
-          interestRate = minRate + riskFactor * (maxRate - minRate);
+          interestRate = minRate + ( (maxRate - minRate)/(Math.log(0.4) - Math.log(0.01)) ) * Math.log(riskFactor);
           interestRate = Math.round(interestRate * 100) / 100; // Round to 2 decimal places
           
           // Default term length (60 months/5 years)
