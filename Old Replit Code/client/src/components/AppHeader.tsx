@@ -20,9 +20,9 @@ export default function AppHeader() {
         {/* Desktop Navigation */}
         <nav className="hidden md:block">
           <ul className="flex space-x-6">
-            <li><a href="#" className="text-white hover:text-neutral-200 text-sm font-medium">How It Works</a></li>
+            <li><Link href="/how-it-works" className="text-white hover:text-neutral-200 text-sm font-medium">How It Works</Link></li>
             <li><Link href="/about" className="text-white hover:text-neutral-200 text-sm font-medium">About Us</Link></li>
-            <li><a href="#" className="text-white hover:text-neutral-200 text-sm font-medium">FAQ</a></li>
+            <li><Link href="/faq" className="text-white hover:text-neutral-200 text-sm font-medium">FAQ</Link></li>
           </ul>
         </nav>
         
@@ -45,9 +45,9 @@ export default function AppHeader() {
       {isMenuOpen && (
         <div className="md:hidden bg-red-700">
           <div className="px-4 py-2 space-y-3">
-            <a href="#" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">How It Works</a>
+            <Link href="/how-it-works" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">How It Works</Link>
             <Link href="/about" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">About Us</Link>
-            <a href="#" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">FAQ</a>
+            <Link href="/faq" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">FAQ</Link>
           </div>
         </div>
       )}
