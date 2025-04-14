@@ -1,6 +1,7 @@
 import { useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
+import AnimatedPage from "@/components/AnimatedPage";
 import ApplicationStepper from "@/components/ApplicationStepper";
 import CreditForm from "@/components/CreditForm";
 import InfoCard from "@/components/InfoCard";
@@ -37,43 +38,49 @@ export default function Application() {
         </div>
         
         {formStep === "credit-info" && (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 md:pb-12">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-2">
-                <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
-                  <h3 className="text-lg font-semibold high-contrast-text mb-4 md:mb-6">Applicant Information</h3>
-                  <CreditForm 
-                    onSubmitStart={handleSubmitStart} 
-                    onApplicationComplete={handleApplicationSubmit} 
-                  />
+          <AnimatedPage variant="slideUp">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-8 md:pb-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
+                  <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+                    <h3 className="text-lg font-semibold high-contrast-text mb-4 md:mb-6">Applicant Information</h3>
+                    <CreditForm 
+                      onSubmitStart={handleSubmitStart} 
+                      onApplicationComplete={handleApplicationSubmit} 
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="md:col-span-1 order-first md:order-last mb-4 md:mb-0">
-                <div className="md:sticky md:top-6">
-                  <InfoCard />
-                  <div className="hidden sm:block">
-                    <SecurityNotice />
+                
+                <div className="md:col-span-1 order-first md:order-last mb-4 md:mb-0">
+                  <div className="md:sticky md:top-6">
+                    <InfoCard />
+                    <div className="hidden sm:block">
+                      <SecurityNotice />
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className="block sm:hidden mt-4">
+                <SecurityNotice />
+              </div>
             </div>
-            <div className="block sm:hidden mt-4">
-              <SecurityNotice />
-            </div>
-          </div>
+          </AnimatedPage>
         )}
         
         {formStep === "processing" && (
-          <div className="px-4 sm:px-6">
-            <ProcessingView />
-          </div>
+          <AnimatedPage variant="fade">
+            <div className="px-4 sm:px-6">
+              <ProcessingView />
+            </div>
+          </AnimatedPage>
         )}
         
         {formStep === "results" && applicationResult && (
-          <div className="px-4 sm:px-6">
-            <ResultsView application={applicationResult} />
-          </div>
+          <AnimatedPage variant="scale">
+            <div className="px-4 sm:px-6">
+              <ResultsView application={applicationResult} />
+            </div>
+          </AnimatedPage>
         )}
       </main>
       
