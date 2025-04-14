@@ -5,12 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Application from "@/pages/application";
+import About from "@/pages/about";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/application" component={Application} />
+      <Route path="/about" component={About} />
       <Route component={NotFound} />
     </Switch>
   );

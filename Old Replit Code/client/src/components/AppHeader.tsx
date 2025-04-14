@@ -21,7 +21,7 @@ export default function AppHeader() {
         <nav className="hidden md:block">
           <ul className="flex space-x-6">
             <li><a href="#" className="text-white hover:text-neutral-200 text-sm font-medium">How It Works</a></li>
-            <li><a href="#" className="text-white hover:text-neutral-200 text-sm font-medium">About Us</a></li>
+            <li><Link href="/about" className="text-white hover:text-neutral-200 text-sm font-medium">About Us</Link></li>
             <li><a href="#" className="text-white hover:text-neutral-200 text-sm font-medium">FAQ</a></li>
           </ul>
         </nav>
@@ -46,7 +46,7 @@ export default function AppHeader() {
         <div className="md:hidden bg-red-700">
           <div className="px-4 py-2 space-y-3">
             <a href="#" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">How It Works</a>
-            <a href="#" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">About Us</a>
+            <Link href="/about" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">About Us</Link>
             <a href="#" className="block text-white hover:text-neutral-200 text-sm font-medium py-2">FAQ</a>
           </div>
         </div>
