@@ -17,7 +17,7 @@ export default function Home() {
                   Take Control of Your Financial Future
                 </h1>
                 <p className="text-base sm:text-lg text-neutral-900 mb-6">
-                  Own Your Day helps you achieve financial freedom with quick, hassle-free loans designed to fit your lifestyle. Submit your application and start your journey today.
+                  Own Your Day helps you achieve financial freedom with quick, hassle-free loans designed to fit your lifestyle. See if you qualify and start your journey today.
                 </p>
                 <div className="space-y-4">
                   <div className="flex items-start">
@@ -27,7 +27,7 @@ export default function Home() {
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium high-contrast-text">Simple Application</h3>
+                      <h3 className="text-sm font-medium high-contrast-text">Simple Qualification Process</h3>
                       <p className="mt-1 text-sm text-neutral-900">Complete our easy-to-use form in just minutes</p>
                     </div>
                   </div>
@@ -60,7 +60,7 @@ export default function Home() {
                 <div className="mt-8">
                   <Link href="/application">
                     <Button size="lg" className="a11y-button w-full sm:w-auto">
-                      Apply Now
+                      Qualify Now
                     </Button>
                   </Link>
                 </div>
@@ -84,7 +84,7 @@ export default function Home() {
                             <svg className="h-5 w-5 a11y-icon mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                             </svg>
-                            <span className="ml-2 text-sm high-contrast-text">Secure, encrypted application process</span>
+                            <span className="ml-2 text-sm high-contrast-text">Secure qualification process</span>
                           </li>
                           <li className="flex items-start">
                             <svg className="h-5 w-5 a11y-icon mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
@@ -139,7 +139,7 @@ export default function Home() {
                           <svg className="h-4 w-4 a11y-icon mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
-                          <span className="ml-2 text-xs high-contrast-text">Secure application process</span>
+                          <span className="ml-2 text-xs high-contrast-text">Secure qualification process</span>
                         </li>
                       </ul>
                     </div>

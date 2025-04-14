@@ -66,7 +66,7 @@ export default function AppFooter() {
             <ul className="space-y-2 py-2 md:py-0">
               <li className="flex items-start text-sm text-neutral-300">
                 <MapPinIcon className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                <span>123 Finance St, Suite 100<br />New York, NY 10001</span>
+                <span>11119 Bellflower Rd<br />Cleveland, OH 44106</span>
               </li>
               <li className="flex items-center text-sm text-neutral-300">
                 <PhoneIcon className="h-4 w-4 mr-2 flex-shrink-0" />
