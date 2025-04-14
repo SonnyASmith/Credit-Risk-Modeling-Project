@@ -154,8 +154,7 @@ export default function ResultsView({ application }: ResultsViewProps) {
                     <li>Review and sign the loan agreement</li>
                     <li>Submit any additional documentation if requested</li>
                     <li>
-                      Funds will be disbursed within 2-3 business days after
-                      approval
+                      A representative will contact you to discuss the next steps
                     </li>
                   </ol>
                 </div>
