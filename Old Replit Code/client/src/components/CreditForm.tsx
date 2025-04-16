@@ -512,8 +512,7 @@ export default function CreditForm({
                     <FormLabel className="text-sm text-neutral-700">
                       I authorize a credit check and confirm that the
                       information provided is accurate. I understand that
-                      providing false information may result in the denial of my
-                      application and possible legal action.
+                      this submission will not affect my credit score.
                     </FormLabel>
                     <FormMessage />
                   </div>
