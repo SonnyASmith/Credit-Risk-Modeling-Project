@@ -89,15 +89,23 @@ export class MemStorage implements IStorage {
           
           // Calculate interest rate based on default probability
           // Higher risk = higher interest rate
-          // Map from probability range [0, threshold] to interest rate range [4.5, 15]
-          const maxProbability = riskModel.isModelLoaded() ? 0.4 : 0.5; // Use model threshold or default
-          const minRate = 4.5;
-          const maxRate = 15.0;
+          // Using 4 discrete risk tiers for approved applications
+          const maxProbability = 0.4; // Approval threshold
           
-          // Logarithmic mapping from default probability to interest rate
-          const riskFactor = defaultProbability / maxProbability;
-          interestRate = minRate + ( (maxRate - minRate)/(Math.log(0.4) - Math.log(0.01)) ) * Math.log(riskFactor);
-          interestRate = Math.round(interestRate * 100) / 100; // Round to 2 decimal places
+          // Assign interest rate based on risk tiers
+          if (defaultProbability <= 0.1) {
+            // Tier 1 (lowest risk): 5%
+            interestRate = 5.0;
+          } else if (defaultProbability <= 0.2) {
+            // Tier 2: 10%
+            interestRate = 10.0;
+          } else if (defaultProbability <= 0.3) {
+            // Tier 3: 15%
+            interestRate = 15.0;
+          } else {
+            // Tier 4 (highest risk but still approved): 20%
+            interestRate = 20.0;
+          }
           
           // Default term length (60 months/5 years)
           termLength = 60;
@@ -371,21 +379,21 @@ function useBasicCreditScoring(application: InsertLoanApplication, denialReasons
 }
 
 /**
- * Calculate interest rate using basic formula as fallback
+ * Calculate interest rate using simple tiers as fallback
  * @param yearsEmployed Years at current job
  * @returns Interest rate percentage
  */
 function calculateBasicInterestRate(yearsEmployed: number): number {
-  let rate = 7.5; // Default base rate
-  
-  // Adjust based on employment stability
+  // Assign interest rate based on employment stability
   if (yearsEmployed > 5) {
-    rate -= 0.5;
-  } else if (yearsEmployed < 1) {
-    rate += 1.0;
+    return 5.0; // Tier 1 - lowest risk
+  } else if (yearsEmployed >= 3) {
+    return 10.0; // Tier 2
+  } else if (yearsEmployed >= 1) {
+    return 15.0; // Tier 3
+  } else {
+    return 20.0; // Tier 4 - highest risk
   }
-  
-  return rate;
 }
 
 // Instantiate and export the in-memory storage
