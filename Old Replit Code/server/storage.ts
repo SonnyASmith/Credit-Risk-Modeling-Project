@@ -116,7 +116,7 @@ export class MemStorage implements IStorage {
           monthlyPayment = Math.round(monthlyPayment * 100) / 100; // Round to 2 decimal places
         } else {
           // Set denial reasons based on risk factors
-          if (defaultProbability > 0.7) {
+          if (defaultProbability > 0.4) {
             denialReasons.push("Overall risk profile exceeds our lending guidelines");
           } else {
             // Add specific denial reasons
