@@ -384,7 +384,7 @@ export default function CreditForm({
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Percentage of available credit being used
+                      Percentage of all available credit being used
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -409,7 +409,7 @@ export default function CreditForm({
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Sum of all your credit card limits
+                      Total bankcard limit
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -434,7 +434,7 @@ export default function CreditForm({
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Sum of all your credit limits (including loans)
+                      Highest total credit limit across all credit lines
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -460,7 +460,7 @@ export default function CreditForm({
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Number of late payments in the past 2 years
+                      Number of 30+ days past-due incidences in the past 2 years
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
