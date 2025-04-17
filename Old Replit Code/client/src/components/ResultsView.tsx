@@ -150,6 +150,7 @@ export default function ResultsView({ application }: ResultsViewProps) {
                     Next Steps
                   </h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-neutral-700">
+                    <li>Create an account to continue with your current application</li>
                     <li>Check your email for official loan documents</li>
                     <li>Review and sign the loan agreement</li>
                     <li>Submit any additional documentation if requested</li>

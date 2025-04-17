@@ -27,7 +27,7 @@ export class RiskModel {
   constructor(modelPath?: string) {
     // Default model path
     if (!modelPath) {
-      modelPath = path.join(__dirname, '/risk_based_pricing_model.json');
+      modelPath = path.join(__dirname, '../risk_based_pricing_model.json');
     }
     
     try {
