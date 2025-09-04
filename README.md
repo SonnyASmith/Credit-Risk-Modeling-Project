@@ -6,7 +6,7 @@
 
 ### Summary
 
-#### The goal of this project is to develop an effective credit risk model and a paired web app to quickly and accurately assess the credit risk of a loan applicant. 
+#### The goal of this project is to develop an effective credit risk model and a paired web app to quickly assess the credit risk of a loan applicant. 
 
 ### Repository Contents
 
@@ -14,4 +14,4 @@
 
 #### Version 1 - Capstone submission with improved Replit code 
 
-#### Version 2 - Revisited Project - Coming Soon ! 
+#### Version 2 - Revisited Project
