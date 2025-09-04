@@ -1,10 +1,5 @@
 # Credit-Risk-Modeling-Project
-# Creation February 24th, 2025
-
-## Contributors:
-### Sonny Smith, Christian Asimou, Jarrod West, Aidan Valentine, Khamil Panni
-
-## Tools used: Python, Replit, ChatGPT, Cursor, Microsoft Copilot
+# February 24th, 2025
 
 # Replit Link for Quick Demo: https://replit.com/@sonnyasmith117/Credit-Risk-Modeling-Project?v=1
 
