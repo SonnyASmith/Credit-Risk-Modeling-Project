@@ -62,7 +62,9 @@ export class MemStorage implements IStorage {
     const employmentStatus = insertApplication.employmentStatus;
     const yearsEmployed = insertApplication.yearsEmployed;
     const loanPurpose = insertApplication.loanPurpose;
-    
+    const loanTerm = insertApplication.loanTerm || null;
+      console.log("LOAN TERM", loanTerm); //REMOVE
+
     let approved = false;
     let denialReasons: string[] = [];
     let approvedAmount = null;
@@ -79,7 +81,7 @@ export class MemStorage implements IStorage {
         
         // Get default probability from the model
         const defaultProbability = riskModel.predictDefaultProbability(features);
-        
+        console.log("Default Probability: ", defaultProbability)
         // Determine approval based on model threshold
         approved = riskModel.isApplicationApproved(defaultProbability);
         
@@ -108,7 +110,7 @@ export class MemStorage implements IStorage {
           }
           
           // Default term length (60 months/5 years)
-          termLength = 60;
+          termLength = loanTerm;//60;
           
           // Calculate monthly payment
           const monthlyRate = interestRate / 100 / 12;
@@ -155,7 +157,7 @@ export class MemStorage implements IStorage {
           }
         }
       } catch (error) {
-        console.error("Error using risk model:", error);
+        console.error("Error using risk model, using fallback:", error);
         // Fall back to basic scoring if risk model fails
         approved = useBasicCreditScoring(insertApplication, denialReasons);
         
@@ -182,7 +184,7 @@ export class MemStorage implements IStorage {
 
     // Ensure required fields are properly typed
     const homeOwnership = insertApplication.homeOwnership || null;
-    const loanTerm = insertApplication.loanTerm || null;
+    //const loanTerm = insertApplication.loanTerm || null;
     
     // Create a new application object with explicit typing
     const application: LoanApplication = {
@@ -243,7 +245,8 @@ function prepareFeatureVector(application: InsertLoanApplication): number[] {
     yearsEmployed,
     loanPurpose,
     homeOwnership,
-    loanTerm,
+    //loanTerm,
+    //console.log("Feature term", loanTerm)
     // Access new fields directly from the application
     // Use nullish coalescing for safe access with defaults
     revolvingUtilization,
@@ -292,7 +295,7 @@ function prepareFeatureVector(application: InsertLoanApplication): number[] {
   featureMap["inq_last_6mths_woe"] = mapInquiriesToWoe(inquiries6Months ?? 0);
   
   // Binary features for loan term
-  featureMap["term_60"] = loanTerm === "60" ? 1 : 0;
+  featureMap["term_60"] = loanTerm === "60" ? 1 : 0;//
   
   // Home ownership binary features - map from frontend values to model values
   featureMap["home_ownership_RENT"] = homeOwnership === "rent" ? 1 : 0;

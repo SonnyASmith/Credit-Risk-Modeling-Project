@@ -28,6 +28,7 @@ export class RiskModel {
     // Default model path
     if (!modelPath) {
       modelPath = path.join(__dirname, '../risk_based_pricing_model.json');
+      console.log("Default filepath used")
     }
     
     try {

@@ -301,8 +301,8 @@ class BusinessObjectiveModels:
         Returns:
             CreditModelTrainer: Trained model instance
         """
-        # Define features emphasizing positive indicators
-        features = [
+        # Define base features
+        base_features = [
             "log_annual_inc",
             "boxcox_total_bc_limit", 
             "emp_length_woe",
@@ -311,6 +311,32 @@ class BusinessObjectiveModels:
             "purpose_credit_card",
             "home_ownership_MORTGAGE",
             "term_60"
+        ]
+        
+        # Load data first to create interaction terms
+        if self.data_processor.df is None:
+            self.data_processor.load_data()
+            
+        # Create interaction terms
+        df = self.data_processor.df.copy()
+        
+        # Income and credit limit interaction
+        df['income_credit_limit_interaction'] = df['log_annual_inc'] * df['boxcox_total_bc_limit']
+        
+        # Employment length and income interaction
+        df['emp_income_interaction'] = df['emp_length_woe'] * df['log_annual_inc']
+        
+        # Term and income interaction
+        df['term_income_interaction'] = df['term_60'] * df['log_annual_inc']
+        
+        # Update the data processor's dataframe
+        self.data_processor.df = df
+        
+        # Combine base features with interaction terms
+        features = base_features + [
+            'income_credit_limit_interaction',
+            'emp_income_interaction',
+            'term_income_interaction'
         ]
         
         # Prepare data with these features

@@ -214,8 +214,7 @@ export default function ResultsView({ application }: ResultsViewProps) {
                     <li className="flex items-start">
                       <InfoIcon className="h-4 w-4 text-primary mt-0.5 mr-2 flex-shrink-0" />
                       <span>
-                        Work on improving your credit score by paying bills on
-                        time and reducing outstanding debt
+                        Consider applying for a longer loan term
                       </span>
                     </li>
                     <li className="flex items-start">
