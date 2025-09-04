@@ -11,6 +11,7 @@
 
 #### Tools used: Python, Replit, ChatGPT, Cursor, Microsoft Copilot
 
+#### Loan Dataset Provided by Santosh from LendingClub
 
 ### Repository Contents
 
