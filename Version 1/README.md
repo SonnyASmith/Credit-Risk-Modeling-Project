@@ -1,9 +1,9 @@
 # Credit-Risk-Modeling-Project Version 1 (Proof-of-Concept)
-# April 18th, 2025
+## April 18th, 2025
 
 # Replit Link for Quick Demo: https://replit.com/@sonnyasmith117/Credit-Risk-Modeling-Project-V1
 
-# Running Locally
+# Steps for Running Locally
 
 ## 1) Download all the code files and directories contained within this folder
 
