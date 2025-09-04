@@ -2,11 +2,15 @@
 
 ### Special Thanks to Dr. Santosh Mishra (KeyBank), Professor Leo Madureria, and Professor Scott Fine for their support 
 
-### Contributors: Aidan Valentine, Jarrod West, Christian Asimou, Sonny Smith, Khamil Panni 
+
+### Contributors: Aidan Valentine, Sonny Smith, Christian Asimou, Jarrod West, Khamil Panni
 
 ### Summary
 
 #### The goal of this project is to develop an effective credit risk model and a paired web app to quickly assess the credit risk of a loan applicant. 
+
+#### Tools used: Python, Replit, ChatGPT, Cursor, Microsoft Copilot
+
 
 ### Repository Contents
 
