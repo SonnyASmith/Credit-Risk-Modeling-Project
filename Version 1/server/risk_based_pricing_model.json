@@ -1,0 +1,43 @@
+{
+  "name": "risk_based_pricing",
+  "features": [
+    "99pti",
+    "99dti",
+    "log_annual_inc",
+    "boxcox_loan_amnt",
+    "revol_util",
+    "boxcox_total_bc_limit",
+    "boxcox_tot_hi_cred_lim",
+    "emp_length_woe",
+    "delinq_2yrs_woe",
+    "inq_last_6mths_woe",
+    "term_60",
+    "home_ownership_RENT",
+    "home_ownership_MORTGAGE",
+    "purpose_credit_card",
+    "purpose_debt_consolidation",
+    "purpose_small_business",
+    "purpose_educational"
+  ],
+  "coefficients": [
+    -0.21874123124090789,
+    0.2886531087266017,
+    -0.32348994985093765,
+    0.6151343868854477,
+    0.11276210536371448,
+    -0.20003264097159995,
+    -0.20538517682750623,
+    -0.013992322247849636,
+    -0.0741443566402383,
+    -0.20364893807688864,
+    0.0,
+    0.060855653967461266,
+    -0.04875414959616372,
+    -0.16399477517787975,
+    -0.09637378068312574,
+    0.05074034835128334,
+    -0.003201370738305276
+  ],
+  "intercept": -0.003806800242875832,
+  "threshold": 0.4
+}
