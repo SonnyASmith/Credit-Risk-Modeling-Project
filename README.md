@@ -1,6 +1,6 @@
-# Loan Credit Risk Modeling Project - Spring 2025 #
+# Loan Credit Risk Modeling Project - Spring 2025 
 
-## Special Thanks to Dr. Santosh Mishra (KeyBank), Professor Leo Madureria, and Professor Scott Fine for their support ##
+## Special Thanks to Dr. Santosh Mishra (KeyBank), Professor Leo Madureria, and Professor Scott Fine for their support 
 
 ## Contributors: Aidan Valentine, Jarrod West, Christian Asimou, Sonny Smith, Khamil Panni ##
 
