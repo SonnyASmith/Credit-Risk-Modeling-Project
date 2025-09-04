@@ -6,7 +6,7 @@
 
 ## Tools used: Python, Replit, ChatGPT, Cursor, Microsoft Copilot
 
-# Replit Link for Quick Demo: 
+# Replit Link for Quick Demo: https://replit.com/@sonnyasmith117/Credit-Risk-Modeling-Project?v=1
 
 # Running Locally
 
