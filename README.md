@@ -17,6 +17,6 @@
 
 #### Old Replit Code - Original output produced by Replit from simple prompts
 
-#### Version 1 - Capstone submission with improved Replit code 
+#### Version 1 - Proof-of-Concept Version from the Original Project
 
 #### Version 2 - Revisited Project
